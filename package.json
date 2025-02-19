@@ -1,5 +1,5 @@
 {
-  "name": "vip-taxi-website",
+  "name": "navbar-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,11 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.1",
-    "recharts": "^2.12.1"
+    "react-router-dom": "^6.22.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
@@ -22,7 +20,6 @@
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.1.4",
-    "dotenv": "^16.4.5"
+    "vite": "^5.1.4"
   }
 }
