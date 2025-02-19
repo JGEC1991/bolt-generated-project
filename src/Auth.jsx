@@ -10,6 +10,7 @@ import React, { useState } from 'react';
       const [phone, setPhone] = useState('');
       const [idNumber, setIdNumber] = useState('');
       const [licenseExpirationDate, setLicenseExpirationDate] = useState('');
+      const [legalDocuments, setLegalDocuments] = useState(false);
       const [isSignUp, setIsSignUp] = useState(false);
       const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ import React, { useState } from 'react';
                 phone: phone,
                 id_number: idNumber,
                 license_expiration_date: licenseExpirationDate,
+                legal_documents: legalDocuments,
               },
             },
           });
@@ -140,6 +142,15 @@ import React, { useState } from 'react';
                     value={licenseExpirationDate}
                     onChange={(e) => setLicenseExpirationDate(e.target.value)}
                     required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="legalDocuments">Legal Documents</label>
+                  <input
+                    type="checkbox"
+                    id="legalDocuments"
+                    checked={legalDocuments}
+                    onChange={(e) => setLegalDocuments(e.target.checked)}
                   />
                 </div>
                 <div>

@@ -6,10 +6,7 @@ import React, { useState, useEffect } from 'react';
       const [name, setName] = useState('');
       const [phone, setPhone] = useState('');
       const [driverLicense, setDriverLicense] = useState('');
-      const [legalDocuments, setLegalDocuments] = useState('');
-      const [username, setUsername] = useState('');
-      const [website, setWebsite] = useState('');
-      const [avatar_url, setAvatarUrl] = useState('');
+      const [legalDocuments, setLegalDocuments] = useState(false);
 
       useEffect(() => {
         getProfile();
@@ -20,7 +17,7 @@ import React, { useState, useEffect } from 'react';
           setLoading(true);
           const { data, error, status } = await supabase
             .from('profiles')
-            .select(`full_name, phone, driver_license, legal_documents, username, website, avatar_url`)
+            .select(`full_name, phone, driver_license, legal_documents`)
             .eq('id', session?.user?.id)
             .single();
 
@@ -32,10 +29,7 @@ import React, { useState, useEffect } from 'react';
             setName(data.full_name || '');
             setPhone(data.phone || '');
             setDriverLicense(data.driver_license || '');
-            setLegalDocuments(data.legal_documents || '');
-            setUsername(data.username || '');
-            setWebsite(data.website || '');
-            setAvatarUrl(data.avatar_url || '');
+            setLegalDocuments(data.legal_documents || false);
           }
         } catch (error) {
           console.error('Error loading user data:', error);
@@ -55,9 +49,6 @@ import React, { useState, useEffect } from 'react';
             phone,
             driver_license,
             legal_documents,
-            username,
-            website,
-            avatar_url,
             updated_at: new Date(),
           };
 
@@ -108,37 +99,10 @@ import React, { useState, useEffect } from 'react';
           <div>
             <label htmlFor="legalDocuments">Legal Documents</label>
             <input
+              type="checkbox"
               id="legalDocuments"
-              type="text"
-              value={legalDocuments}
-              onChange={(e) => setLegalDocuments(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="username">Username</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="website">Website</label>
-            <input
-              id="website"
-              type="url"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="avatar_url">Avatar URL</label>
-            <input
-              id="avatar_url"
-              type="url"
-              value={avatar_url}
-              onChange={(e) => setAvatarUrl(e.target.value)}
+              checked={legalDocuments}
+              onChange={(e) => setLegalDocuments(e.target.checked)}
             />
           </div>
 
