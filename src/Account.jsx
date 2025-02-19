@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 
 const Account = ({ session }) => {
   const [loading, setLoading] = useState(false);
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [legalDocuments, setLegalDocuments] = useState(false);
   const [plateNumber, setPlateNumber] = useState('');
@@ -33,7 +33,7 @@ const Account = ({ session }) => {
       }
 
       if (data) {
-        setFullName(data.full_name || '');
+        setName(data.full_name || '');
         setPhone(data.phone || '');
         setLegalDocuments(data.legal_documents || false);
         setPlateNumber(data.plate_number || '');
@@ -52,7 +52,7 @@ const Account = ({ session }) => {
       setLoading(true);
       console.log('Updating profile with:', {
         id: session?.user?.id,
-        full_name: fullName,
+        full_name: name,
         phone,
         legal_documents: legalDocuments,
         plate_number: plateNumber,
@@ -61,7 +61,7 @@ const Account = ({ session }) => {
 
       const updates = {
         id: session?.user?.id,
-        full_name: fullName,
+        full_name: name,
         phone,
         legal_documents: legalDocuments,
         plate_number: plateNumber,
@@ -88,12 +88,12 @@ const Account = ({ session }) => {
   return (
     <div className="form-widget">
       <div>
-        <label htmlFor="fullName">Full Name</label>
+        <label htmlFor="name">Name</label>
         <input
-          id="fullName"
+          id="name"
           type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
       </div>
       <div>
