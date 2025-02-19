@@ -191,7 +191,7 @@ import React, { useState } from 'react';
                     className="button block primary"
                     disabled={loading}
                   >
-                    {loading ? <span>Loading</span> : <span>Login</span>}
+                    {loading ? <span>Login</span> : <span>Login</span>}
                   </button>
                 </div>
               </form>

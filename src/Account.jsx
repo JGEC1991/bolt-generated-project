@@ -15,10 +15,16 @@ import React, { useState, useEffect } from 'react';
       const getProfile = async () => {
         try {
           setLoading(true);
+          console.log('Session:', session);
+          if (!session?.user?.id) {
+            console.error('User ID is missing from session');
+            alert('User ID is missing from session');
+            return;
+          }
           const { data, error, status } = await supabase
             .from('profiles')
             .select(`full_name, phone, driver_license, legal_documents`)
-            .eq('id', session?.user?.id)
+            .eq('id', session.user.id)
             .single();
 
           if (error && status !== 406) {
@@ -42,6 +48,13 @@ import React, { useState, useEffect } from 'react';
       const updateProfile = async () => {
         try {
           setLoading(true);
+          console.log('Updating profile with:', {
+            id: session?.user?.id,
+            full_name: name,
+            phone,
+            driver_license,
+            legal_documents,
+          });
 
           const updates = {
             id: session?.user?.id,
@@ -52,7 +65,7 @@ import React, { useState, useEffect } from 'react';
             updated_at: new Date(),
           };
 
-          const { error } = await supabase.from('profiles').upsert(updates);
+          const { data, error } = await supabase.from('profiles').upsert(updates);
 
           if (error) {
             console.error('Error updating profile:', error);
