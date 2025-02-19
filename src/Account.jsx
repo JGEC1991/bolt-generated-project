@@ -20,7 +20,7 @@ import React, { useState, useEffect } from 'react';
           setLoading(true);
           const { data, error, status } = await supabase
             .from('profiles')
-            .select(`name, phone, driver_license, legal_documents, username, website, avatar_url`)
+            .select(`full_name, phone, driver_license, legal_documents, username, website, avatar_url`)
             .eq('id', session?.user?.id)
             .single();
 
@@ -29,7 +29,7 @@ import React, { useState, useEffect } from 'react';
           }
 
           if (data) {
-            setName(data.name || '');
+            setName(data.full_name || '');
             setPhone(data.phone || '');
             setDriverLicense(data.driver_license || '');
             setLegalDocuments(data.legal_documents || '');
@@ -51,7 +51,7 @@ import React, { useState, useEffect } from 'react';
 
           const updates = {
             id: session?.user?.id,
-            name,
+            full_name: name,
             phone,
             driver_license,
             legal_documents,
