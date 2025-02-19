@@ -56,7 +56,6 @@ const Account = ({ session }) => {
         phone,
         legal_documents: legalDocuments,
         plate_number: plateNumber,
-        email: email,
       });
 
       const updates = {
@@ -65,7 +64,6 @@ const Account = ({ session }) => {
         phone,
         legal_documents: legalDocuments,
         plate_number: plateNumber,
-        email: email,
         updated_at: new Date(),
       };
 
@@ -129,7 +127,7 @@ const Account = ({ session }) => {
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          readOnly
         />
       </div>
 
