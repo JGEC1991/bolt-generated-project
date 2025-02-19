@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
       const [loading, setLoading] = useState(false);
       const [name, setName] = useState('');
       const [phone, setPhone] = useState('');
-      const [driverLicense, setDriverLicense] = useState('');
       const [legalDocuments, setLegalDocuments] = useState(false);
 
       useEffect(() => {
@@ -23,7 +22,7 @@ import React, { useState, useEffect } from 'react';
           }
           const { data, error, status } = await supabase
             .from('profiles')
-            .select(`full_name, phone, driver_license, legal_documents`)
+            .select(`full_name, phone, legal_documents`)
             .eq('id', session.user.id)
             .single();
 
@@ -34,7 +33,6 @@ import React, { useState, useEffect } from 'react';
           if (data) {
             setName(data.full_name || '');
             setPhone(data.phone || '');
-            setDriverLicense(data.driver_license || '');
             setLegalDocuments(data.legal_documents || false);
           }
         } catch (error) {
@@ -52,23 +50,22 @@ import React, { useState, useEffect } from 'react';
             id: session?.user?.id,
             full_name: name,
             phone,
-            driver_license,
-            legal_documents,
+            legalDocuments,
           });
 
           const updates = {
             id: session?.user?.id,
             full_name: name,
             phone,
-            driver_license,
-            legal_documents,
+            legal_documents: legalDocuments,
             updated_at: new Date(),
           };
 
-          const { data, error } = await supabase.from('profiles').upsert(updates);
+          const { data, error } = await supabase.from('profiles').upsert(updates).eq('id', session.user.id);
 
           if (error) {
             console.error('Error updating profile:', error);
+            alert('Error updating the data!');
             throw error;
           }
           alert('Profile updated successfully!');
@@ -98,15 +95,6 @@ import React, { useState, useEffect } from 'react';
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="driverLicense">Driver License</label>
-            <input
-              id="driverLicense"
-              type="text"
-              value={driverLicense}
-              onChange={(e) => setDriverLicense(e.target.value)}
             />
           </div>
           <div>
