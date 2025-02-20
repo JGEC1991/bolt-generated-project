@@ -88,7 +88,7 @@ function MyProfile() {
 
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${session.user.id}.${fileExt}`;
-      const filePath = `profile-photos/${fileName}`;
+      const filePath = `${fileName}`; // Path within the bucket
 
       const { data, error } = await supabase.storage
         .from('profile-photos')
@@ -103,7 +103,7 @@ function MyProfile() {
         return;
       }
 
-      const imageUrl = `${supabase.supabaseUrl}/storage/v1/object/public/${data.Key}`;
+      const imageUrl = `${supabase.supabaseUrl}/storage/v1/object/public/profile-photos/${filePath}`;
       setProfileImageUrl(imageUrl);
 
       await updateProfile({ profile_image: imageUrl });
