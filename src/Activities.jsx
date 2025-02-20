@@ -21,18 +21,40 @@ import React, { useState, useEffect } from 'react';
         created_at_to: '',
       });
       const [selectedFile, setSelectedFile] = useState(null);
+      const [selectedActivities, setSelectedActivities] = useState([]);
+      const [selectAll, setSelectAll] = useState(false);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [activitiesPerPage] = useState(10); // You can change this value
+      const [totalActivities, setTotalActivities] = useState(0);
+      const [columnVisibility, setColumnVisibility] = useState({
+        id: true,
+        createdAt: true,
+        plateNumber: true,
+        activityType: true,
+        comments: true,
+        activityUser: true,
+        files: true,
+        actions: true,
+      });
+      const [showColumnSettings, setShowColumnSettings] = useState(false);
 
       useEffect(() => {
         fetchActivities();
         fetchUsers();
-      }, [filters]);
+      }, [filters, currentPage, activitiesPerPage]);
+
+      useEffect(() => {
+        // Update selectedActivities when activities change (e.g., after filtering)
+        setSelectedActivities([]);
+        setSelectAll(false);
+      }, [activities]);
 
       const fetchActivities = async () => {
         try {
           setLoading(true);
           let query = supabase
             .from('activities')
-            .select('*')
+            .select('*', { count: 'exact' })
             .order('created_at', { ascending: false });
 
           if (filters.plate_number) {
@@ -51,13 +73,19 @@ import React, { useState, useEffect } from 'react';
             query = query.lte('created_at', filters.created_at_to + 'T23:59:59.999Z');
           }
 
-          const { data, error } = await query;
+          const startIndex = (currentPage - 1) * activitiesPerPage;
+          const endIndex = startIndex + activitiesPerPage - 1;
+
+          query = query.range(startIndex, endIndex);
+
+          const { data, error, count } = await query;
 
           if (error) {
             console.error('Error fetching activities:', error);
             alert('Failed to load activities.');
           } else {
             setActivities(data);
+            setTotalActivities(count);
           }
         } finally {
           setLoading(false);
@@ -256,6 +284,25 @@ import React, { useState, useEffect } from 'react';
         return tags;
       };
 
+      const handleActivitySelection = (id) => {
+        setSelectedActivities((prevSelected) => {
+          if (prevSelected.includes(id)) {
+            return prevSelected.filter((activityId) => activityId !== id);
+          } else {
+            return [...prevSelected, id];
+          }
+        });
+      };
+
+      const handleSelectAll = () => {
+        setSelectAll(!selectAll);
+        if (!selectAll) {
+          setSelectedActivities(activities.map((activity) => activity.id));
+        } else {
+          setSelectedActivities([]);
+        }
+      };
+
       const handleDeleteActivity = async (id) => {
         try {
           setLoading(true);
@@ -275,6 +322,37 @@ import React, { useState, useEffect } from 'react';
           alert('Error deleting activity.');
         } finally {
           setLoading(false);
+        }
+      };
+
+      const handleBulkDelete = async () => {
+        if (selectedActivities.length === 0) {
+          alert('Please select activities to delete.');
+          return;
+        }
+
+        if (window.confirm('Are you sure you want to delete selected activities?')) {
+          try {
+            setLoading(true);
+            const { data, error } = await supabase
+              .from('activities')
+              .delete()
+              .in('id', selectedActivities);
+
+            if (error) {
+              console.error('Error deleting activities:', error);
+              alert('Failed to delete selected activities.');
+            } else {
+              setActivities(activities.filter((activity) => !selectedActivities.includes(activity.id)));
+              setSelectedActivities([]);
+              setSelectAll(false);
+            }
+          } catch (error) {
+            console.error('Error deleting activities:', error);
+            alert('Error deleting activities.');
+          } finally {
+            setLoading(false);
+          }
         }
       };
 
@@ -302,12 +380,31 @@ import React, { useState, useEffect } from 'react';
         }
       };
 
+      const totalPages = Math.ceil(totalActivities / activitiesPerPage);
+
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        });
+      };
+
+      const toggleColumnVisibility = (column) => {
+        setColumnVisibility((prev) => ({ ...prev, [column]: !prev[column] }));
+      };
+
+      const toggleColumnSettings = () => {
+        setShowColumnSettings(!showColumnSettings);
+      };
+
       return (
         <div className="container mx-auto mt-8">
-          {/* Render filter tags */}
-          <div className="mb-4">{renderFilterTags()}</div>
-
-          <div className="flex items-center mb-4">
+          <div className="flex items-center justify-start mb-4">
             <form onSubmit={handleFilterSubmit} className="flex items-center">
               <input
                 type="text"
@@ -361,196 +458,267 @@ import React, { useState, useEffect } from 'react';
                 Filter
               </button>
               <button
-                type="button"
-                onClick={handleClearFilters}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+                onClick={toggleColumnSettings}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2 text-xs"
               >
-                Clear
+                Columns
               </button>
             </form>
-            <button
-              onClick={toggleForm}
-              className="flex items-center ml-2"
-            >
-              <img
-                src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//plus.png"
-                alt="Add Activity"
-                className="w-12 h-12"
-              />
-            </button>
           </div>
 
-          {showForm && (
-            <div className="fixed top-0 left-0 w-full h-full bg-gray-500 bg-opacity-75 flex justify-center items-center">
-              <div className="bg-white p-8 rounded shadow-md w-96">
-                <h2 className="text-xl font-bold mb-4">Add New Activity</h2>
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-4">
-                    <label htmlFor="plate_number" className="block text-gray-700 text-sm font-bold mb-2">
-                      Plate Number:
-                    </label>
-                    <input
-                      type="text"
-                      id="plate_number"
-                      name="plate_number"
-                      value={newActivity.plate_number}
-                      onChange={handleInputChange}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      required
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="activity_type" className="block text-gray-700 text-sm font-bold mb-2">
-                      Activity Type:
-                    </label>
-                    <select
-                      id="activity_type"
-                      name="activity_type"
-                      value={newActivity.activity_type}
-                      onChange={handleInputChange}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      required
-                    >
-                      <option value="">Select Activity Type</option>
-                      {activityTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="comments" className="block text-gray-700 text-sm font-bold mb-2">
-                      Comments:
-                    </label>
-                    <textarea
-                      id="comments"
-                      name="comments"
-                      value={newActivity.comments}
-                      onChange={handleInputChange}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="activity_user" className="block text-gray-700 text-sm font-bold mb-2">
-                      Activity User:
-                    </label>
-                    <select
-                      id="activity_user"
-                      name="activity_user"
-                      value={newActivity.activity_user}
-                      onChange={handleInputChange}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      required
-                    >
-                      <option value="">Select User</option>
-                      {users.map((user) => (
-                        <option key={user.email} value={user.email}>
-                          {user.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                   {/* File Upload Input */}
-                  <div className="mb-4">
-                    <label htmlFor="activity_files" className="block text-gray-700 text-sm font-bold mb-2">
-                      Activity Files:
-                    </label>
-                    <input
-                      type="file"
-                      id="activity_files"
-                      name="activity_files"
-                      onChange={handleFileChange}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    />
-                    {selectedFile && (
-                      <p className="text-gray-600 text-sm mt-1">Selected file: {selectedFile.name}</p>
-                    )}
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                      Add
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                      className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded ml-2 focus:outline-none focus:shadow-outline"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          {/* Render filter tags */}
+          <div className="mb-4">{renderFilterTags()}</div>
 
-          {loading ? (
-            <p>Loading activities...</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200">
-                <thead className="bg-gray-100 text-black">
-                  <tr>
-                    <th className="px-4 py-2 text-left">ID</th>
-                    <th className="px-4 py-2 text-left">Created At</th>
-                    <th className="px-4 py-2 text-left">Plate Number</th>
-                    <th className="px-4 py-2 text-left">Activity Type</th>
-                    <th className="px-4 py-2 text-left">Comments</th>
-                    <th className="px-4 py-2 text-left">Activity User</th>
-                    {/* Add column for activity_files */}
-                    <th className="px-4 py-2 text-left">Files</th>
-                     <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-700">
-                  {activities.map((activity) => (
-                    <tr key={activity.id} className="hover:bg-gray-50">
-                      <td className="border px-4 py-2">{activity.id}</td>
-                      <td className="border px-4 py-2">{activity.created_at}</td>
-                      <td className="border px-4 py-2">{activity.plate_number}</td>
-                      <td className="border px-4 py-2">{activity.activity_type}</td>
-                      <td className="border px-4 py-2">{activity.comments}</td>
-                      <td className="border px-4 py-2">{activity.activity_user}</td>
-                      {/* Display activity_files link */}
-                      <td className="border px-4 py-2">
-                        {activity.activity_files && (
-                          <a
-                            href={activity.activity_files}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            View File
-                          </a>
-                        )}
-                      </td>
-                      <td className="border px-4 py-2">
-                         <button
-                            onClick={() => toggleForm(activity)}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
-                          >
-                            Edit
-                          </button>
-                        <button
-                          onClick={() => handleDeleteActivity(activity.id)}
-                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+          <div className="flex">
+            <div className="w-full">
+              {showForm && (
+                <div className="fixed top-0 left-0 w-full h-full bg-gray-500 bg-opacity-75 flex justify-center items-center">
+                  <div className="bg-white p-8 rounded shadow-md w-96">
+                    <h2 className="text-xl font-bold mb-4">Add New Activity</h2>
+                    <form onSubmit={handleSubmit}>
+                      <div className="mb-4">
+                        <label htmlFor="plate_number" className="block text-gray-700 text-sm font-bold mb-2">
+                          Plate Number:
+                        </label>
+                        <input
+                          type="text"
+                          id="plate_number"
+                          name="plate_number"
+                          value={newActivity.plate_number}
+                          onChange={handleInputChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          required
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label htmlFor="activity_type" className="block text-gray-700 text-sm font-bold mb-2">
+                          Activity Type:
+                        </label>
+                        <select
+                          id="activity_type"
+                          name="activity_type"
+                          value={newActivity.activity_type}
+                          onChange={handleInputChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          required
                         >
-                          Delete
+                          <option value="">Select Activity Type</option>
+                          {activityTypes.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mb-4">
+                        <label htmlFor="comments" className="block text-gray-700 text-sm font-bold mb-2">
+                          Comments:
+                        </label>
+                        <textarea
+                          id="comments"
+                          name="comments"
+                          value={newActivity.comments}
+                          onChange={handleInputChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label htmlFor="activity_user" className="block text-gray-700 text-sm font-bold mb-2">
+                          Activity User:
+                        </label>
+                        <select
+                          id="activity_user"
+                          name="activity_user"
+                          value={newActivity.activity_user}
+                          onChange={handleInputChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          required
+                        >
+                          <option value="">Select User</option>
+                          {users.map((user) => (
+                            <option key={user.email} value={user.email}>
+                              {user.email}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                       {/* File Upload Input */}
+                      <div className="mb-4">
+                        <label htmlFor="activity_files" className="block text-gray-700 text-sm font-bold mb-2">
+                          Activity Files:
+                        </label>
+                        <input
+                          type="file"
+                          id="activity_files"
+                          name="activity_files"
+                          onChange={handleFileChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        />
+                        {selectedFile && (
+                          <p className="text-gray-600 text-sm mt-1">Selected file: {selectedFile.name}</p>
+                        )}
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                          Add
                         </button>
                         <button
-                          onClick={() => handleArchiveActivity(activity.id)}
-                          className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
-                          >
-                            Archive
-                          </button>
-                      </td>
-                    </tr>
+                          type="button"
+                          onClick={() => setShowForm(false)}
+                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded ml-2 focus:outline-none focus:shadow-outline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {loading ? (
+                <p>Loading activities...</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white border border-gray-200">
+                    <thead className="bg-gray-100 text-black">
+                      <tr>
+                        <th className="px-4 py-2 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectAll}
+                            onChange={handleSelectAll}
+                            className="focus:outline-none focus:shadow-outline"
+                          />
+                        </th>
+                        {columnVisibility.id && <th className="px-4 py-2 text-left">ID</th>}
+                        {columnVisibility.createdAt && <th className="px-4 py-2 text-left">Created At</th>}
+                        {columnVisibility.plateNumber && <th className="px-4 py-2 text-left">Plate Number</th>}
+                        {columnVisibility.activityType && <th className="px-4 py-2 text-left">Activity Type</th>}
+                        {columnVisibility.comments && <th className="px-4 py-2 text-left">Comments</th>}
+                        {columnVisibility.activityUser && <th className="px-4 py-2 text-left">Activity User</th>}
+                        {columnVisibility.files && <th className="px-4 py-2 text-left">Files</th>}
+                        <th className="px-4 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      {activities.map((activity) => (
+                        <tr key={activity.id} className="hover:bg-gray-50">
+                          <td className="border px-4 py-2">
+                            <input
+                              type="checkbox"
+                              value={activity.id}
+                              checked={selectedActivities.includes(activity.id)}
+                              onChange={() => handleActivitySelection(activity.id)}
+                              className="focus:outline-none focus:shadow-outline"
+                            />
+                          </td>
+                          {columnVisibility.id && <td className="border px-4 py-2">{activity.id}</td>}
+                          {columnVisibility.createdAt && (
+                            <td className="border px-4 py-2">{formatDate(activity.created_at)}</td>
+                          )}
+                          {columnVisibility.plateNumber && <td className="border px-4 py-2">{activity.plate_number}</td>}
+                          {columnVisibility.activityType && <td className="border px-4 py-2">{activity.activity_type}</td>}
+                          {columnVisibility.comments && <td className="border px-4 py-2">{activity.comments}</td>}
+                          {columnVisibility.activityUser && <td className="border px-4 py-2">{activity.activity_user}</td>}
+                          {columnVisibility.files && (
+                            <td className="border px-4 py-2">
+                              {activity.activity_files && (
+                                <a
+                                  href={activity.activity_files}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 hover:text-blue-700"
+                                >
+                                  View File
+                                </a>
+                              )}
+                            </td>
+                          )}
+                          <td className="border px-4 py-2">
+                            <button
+                              onClick={() => toggleForm(activity)}
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteActivity(activity.id)}
+                              className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => handleArchiveActivity(activity.id)}
+                              className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
+                            >
+                              Archive
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-800 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
+                >
+                  Delete Selected
+                </button>
+                {/* Pagination */}
+                <div className="text-xs">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-2 rounded-l"
+                  >
+                    Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-2 ${
+                        currentPage === page ? 'bg-blue-500 text-white' : ''
+                      }`}
+                    >
+                      {page}
+                    </button>
                   ))}
-                </tbody>
-              </table>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-2 rounded-r"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column Settings Panel */}
+          {showColumnSettings && (
+            <div className="w-1/5 bg-gray-100 p-4 border border-gray-200 rounded">
+              <h3 className="font-bold mb-2">Column Visibility</h3>
+              <div className="flex flex-col">
+                {Object.keys(columnVisibility).map((column) => (
+                  <label key={column} className="inline-flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={columnVisibility[column]}
+                      onChange={() => toggleColumnVisibility(column)}
+                      className="mr-1"
+                    />
+                    {column.charAt(0).toUpperCase() + column.slice(1)}
+                  </label>
+                ))}
+              </div>
             </div>
           )}
         </div>
