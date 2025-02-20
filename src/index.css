@@ -66,6 +66,8 @@
 
     .nav {
       flex-grow: 1;
+      padding-left: 20px;
+      background: none;
     }
 
     .nav-list {
@@ -90,15 +92,23 @@
       /* Prevent text from wrapping */
     }
 
-    .nav-item a {
+    .nav-link {
       text-decoration: none;
       color: var(--link-text-color);
       /* Use dynamic link text color */
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      padding-bottom: 2px; /* Add some padding below the text */
     }
 
     .nav-item a:hover {
       color: #007bff;
+    }
+
+    .nav-item.active .nav-link {
+      border-bottom: 2px solid blue; /* Add the underline */
+      color: blue; /* Keep the text blue */
     }
 
     .login-button,
@@ -414,4 +424,25 @@
       /* Align to the right */
       padding-right: 10px;
       /* Add some padding to the right edge */
+    }
+
+    .nav-item.active .nav-link {
+      border-bottom: 2px solid blue; /* Add the underline */
+      color: blue; /* Keep the text blue */
+    }
+
+    .nav {
+      background: none;
+      padding-left: 20px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-icon {
+      width: 20px; /* Adjust icon size as needed */
+      height: 20px;
+      margin-right: 5px; /* Add spacing between icon and text */
     }

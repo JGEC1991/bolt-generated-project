@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
         activity_type: '',
         comments: '',
         activity_user: '',
+        activity_files: '',
       });
       const [filters, setFilters] = useState({
         plate_number: '',
@@ -19,6 +20,7 @@ import React, { useState, useEffect } from 'react';
         created_at_from: '',
         created_at_to: '',
       });
+      const [selectedFile, setSelectedFile] = useState(null);
 
       useEffect(() => {
         fetchActivities();
@@ -84,12 +86,61 @@ import React, { useState, useEffect } from 'react';
         setNewActivity({ ...newActivity, [e.target.name]: e.target.value });
       };
 
+      const handleFileChange = (e) => {
+        setSelectedFile(e.target.files[0]);
+      };
+
+      const uploadFile = async () => {
+        if (!selectedFile) {
+          alert('Please select a file to upload.');
+          return null;
+        }
+
+        try {
+          setLoading(true);
+          const fileExt = selectedFile.name.split('.').pop();
+          const fileName = `${Date.now()}.${fileExt}`;
+          const filePath = `${fileName}`;
+
+          const { data, error } = await supabase.storage
+            .from('activity-files')
+            .upload(filePath, selectedFile, {
+              cacheControl: '3600',
+              upsert: false,
+            });
+
+          if (error) {
+            console.error('Error uploading file:', error);
+            alert('Failed to upload file.');
+            return null;
+          }
+
+          const fileUrl = `${supabase.supabaseUrl}/storage/v1/object/public/activity-files/${filePath}`;
+          return fileUrl;
+        } catch (error) {
+          console.error('Error uploading file:', error);
+          alert('Error uploading file.');
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      };
+
       const handleSubmit = async (e) => {
         e.preventDefault();
+        let fileUrl = null;
+        if (selectedFile) {
+          fileUrl = await uploadFile();
+          if (!fileUrl) {
+            return; // Stop submission if file upload fails
+          }
+        }
+
         try {
+          setLoading(true);
           const { data, error } = await supabase
             .from('activities')
-            .insert([newActivity])
+            .insert([{ ...newActivity, activity_files: fileUrl || null }])
             .select();
 
           if (error) {
@@ -102,12 +153,16 @@ import React, { useState, useEffect } from 'react';
               activity_type: '',
               comments: '',
               activity_user: '',
+              activity_files: '',
             });
+            setSelectedFile(null);
             setShowForm(false);
           }
         } catch (error) {
           console.error('Error adding activity:', error);
           alert('Failed to add activity.');
+        } finally {
+          setLoading(false);
         }
       };
 
@@ -129,9 +184,9 @@ import React, { useState, useEffect } from 'react';
         setFilters({ ...filters, [e.target.name]: e.target.value });
       };
 
-      const handleFilterSubmit = (e) => {
+      const handleFilterSubmit = async (e) => {
         e.preventDefault();
-        fetchActivities();
+        await fetchActivities();
       };
 
       const handleClearFilters = () => {
@@ -145,8 +200,13 @@ import React, { useState, useEffect } from 'react';
         fetchActivities();
       };
 
-      // Function to generate filter tags
       const renderFilterTags = () => {
+        const handleRemoveTag = (key) => {
+          const newFilters = { ...filters };
+          newFilters[key] = '';
+          setFilters(newFilters);
+        };
+
         const tags = [];
         for (const key in filters) {
           if (filters[key]) {
@@ -173,15 +233,73 @@ import React, { useState, useEffect } from 'react';
             tags.push(
               <span
                 key={key}
-                className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+                className="inline-flex items-center bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
               >
                 {label}
                 {filters[key]}
+                <button
+                  onClick={() => handleRemoveTag(key)}
+                  className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
               </span>
             );
           }
         }
         return tags;
+      };
+
+      const handleDeleteActivity = async (id) => {
+        try {
+          setLoading(true);
+          const { data, error } = await supabase
+            .from('activities')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            console.error('Error deleting activity:', error);
+            alert('Failed to delete activity.');
+          } else {
+            setActivities(activities.filter((activity) => activity.id !== id));
+          }
+        } catch (error) {
+          console.error('Error deleting activity:', error);
+          alert('Error deleting activity.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleArchiveActivity = async (id) => {
+        try {
+          setLoading(true);
+          // Implement your archive logic here (e.g., update a column 'is_archived' to true)
+          const { data, error } = await supabase
+            .from('activities')
+            .update({ is_archived: true })
+            .eq('id', id)
+            .select();
+
+          if (error) {
+            console.error('Error archiving activity:', error);
+            alert('Failed to archive activity.');
+          } else {
+            setActivities(activities.map((activity) => (activity.id === id ? { ...activity, is_archived: true } : activity)));
+          }
+        } catch (error) {
+          console.error('Error archiving activity:', error);
+          alert('Error archiving activity.');
+        } finally {
+          setLoading(false);
+        }
       };
 
       return (
@@ -333,6 +451,22 @@ import React, { useState, useEffect } from 'react';
                       ))}
                     </select>
                   </div>
+                   {/* File Upload Input */}
+                  <div className="mb-4">
+                    <label htmlFor="activity_files" className="block text-gray-700 text-sm font-bold mb-2">
+                      Activity Files:
+                    </label>
+                    <input
+                      type="file"
+                      id="activity_files"
+                      name="activity_files"
+                      onChange={handleFileChange}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                    {selectedFile && (
+                      <p className="text-gray-600 text-sm mt-1">Selected file: {selectedFile.name}</p>
+                    )}
+                  </div>
                   <div className="flex justify-end">
                     <button
                       type="submit"
@@ -366,6 +500,9 @@ import React, { useState, useEffect } from 'react';
                     <th className="px-4 py-2 text-left">Activity Type</th>
                     <th className="px-4 py-2 text-left">Comments</th>
                     <th className="px-4 py-2 text-left">Activity User</th>
+                    {/* Add column for activity_files */}
+                    <th className="px-4 py-2 text-left">Files</th>
+                     <th className="px-4 py-2 text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-700">
@@ -377,6 +514,39 @@ import React, { useState, useEffect } from 'react';
                       <td className="border px-4 py-2">{activity.activity_type}</td>
                       <td className="border px-4 py-2">{activity.comments}</td>
                       <td className="border px-4 py-2">{activity.activity_user}</td>
+                      {/* Display activity_files link */}
+                      <td className="border px-4 py-2">
+                        {activity.activity_files && (
+                          <a
+                            href={activity.activity_files}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            View File
+                          </a>
+                        )}
+                      </td>
+                      <td className="border px-4 py-2">
+                         <button
+                            onClick={() => toggleForm(activity)}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                          >
+                            Edit
+                          </button>
+                        <button
+                          onClick={() => handleDeleteActivity(activity.id)}
+                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => handleArchiveActivity(activity.id)}
+                          className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
+                          >
+                            Archive
+                          </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
