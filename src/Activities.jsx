@@ -23,7 +23,7 @@ import React, { useState, useEffect } from 'react';
       useEffect(() => {
         fetchActivities();
         fetchUsers();
-      }, [filters]); // Add filters as a dependency
+      }, [filters]);
 
       const fetchActivities = async () => {
         try {
@@ -90,13 +90,13 @@ import React, { useState, useEffect } from 'react';
           const { data, error } = await supabase
             .from('activities')
             .insert([newActivity])
-            .select(); // Retrieve the newly inserted row
+            .select();
 
           if (error) {
             console.error('Error adding activity:', error);
             alert('Failed to add activity.');
           } else {
-            setActivities([data[0], ...activities]); // Add new activity to the beginning
+            setActivities([data[0], ...activities]);
             setNewActivity({
               plate_number: '',
               activity_type: '',
@@ -142,11 +142,53 @@ import React, { useState, useEffect } from 'react';
           created_at_from: '',
           created_at_to: '',
         });
-        fetchActivities(); // Fetch activities after clearing filters
+        fetchActivities();
+      };
+
+      // Function to generate filter tags
+      const renderFilterTags = () => {
+        const tags = [];
+        for (const key in filters) {
+          if (filters[key]) {
+            let label = '';
+            switch (key) {
+              case 'plate_number':
+                label = 'Plate Number: ';
+                break;
+              case 'activity_type':
+                label = 'Activity Type: ';
+                break;
+              case 'activity_user':
+                label = 'Activity User: ';
+                break;
+              case 'created_at_from':
+                label = 'Created From: ';
+                break;
+              case 'created_at_to':
+                label = 'Created To: ';
+                break;
+              default:
+                label = '';
+            }
+            tags.push(
+              <span
+                key={key}
+                className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+              >
+                {label}
+                {filters[key]}
+              </span>
+            );
+          }
+        }
+        return tags;
       };
 
       return (
         <div className="container mx-auto mt-8">
+          {/* Render filter tags */}
+          <div className="mb-4">{renderFilterTags()}</div>
+
           <div className="flex items-center mb-4">
             <form onSubmit={handleFilterSubmit} className="flex items-center">
               <input
