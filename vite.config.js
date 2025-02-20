@@ -5,8 +5,27 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    rewrite: [
-      { from: /^\/.*$/, to: '/index.html' }
-    ]
+    proxy: {
+      '/my-profile': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/index.html',
+        changeOrigin: true
+      },
+      '/vehicle': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/index.html',
+        changeOrigin: true
+      },
+      '/activities': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/index.html',
+        changeOrigin: true
+      },
+      '/settings': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/index.html',
+        changeOrigin: true
+      }
+    }
   }
 })

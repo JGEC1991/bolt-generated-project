@@ -40,6 +40,7 @@ function Activities({ session }) {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const actionsColumnRef = useRef(null);
   const [editingActivity, setEditingActivity] = useState(null);
+  const addButtonIcon = 'https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//universal-add-button-icon.png';
 
   useEffect(() => {
     if (session) {
@@ -103,12 +104,14 @@ function Activities({ session }) {
       if (error) {
         console.error('Error fetching users:', error);
         alert('Failed to load users.');
+        setUsers([]); // Ensure users is an array even on error
       } else {
-        setUsers(data);
+        setUsers(data || []); // Ensure users is an array if data is null
       }
     } catch (error) {
       console.error('Error fetching users:', error);
       alert('Failed to load users.');
+      setUsers([]); // Ensure users is an array even on error
     }
   };
 
@@ -327,7 +330,7 @@ function Activities({ session }) {
   const handleDeleteActivity = async (id) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('activities')
         .delete()
         .eq('id', id);
@@ -410,7 +413,6 @@ function Activities({ session }) {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
-      minute: 'numeric',
       hour12: true,
     });
   };
@@ -465,7 +467,7 @@ function Activities({ session }) {
 
   return (
     <div className="container mx-auto mt-8">
-      <div className="flex items-center justify-start mb-4">
+      <div className="flex items-center justify-between mb-4">
         <form onSubmit={handleFilterSubmit} className="flex items-center">
           <input
             type="text"
@@ -514,17 +516,27 @@ function Activities({ session }) {
           />
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            onClick={handleFilterSubmit}
+            className="align-bottom bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline h-10"
           >
             Filter
           </button>
           <button
             onClick={toggleColumnSettings}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2 text-xs"
+            className="align-bottom bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2 text-xs h-10"
           >
             Columns
           </button>
         </form>
+        <button
+          onClick={() => {
+            setEditingActivity(null);
+            toggleForm();
+          }}
+          className="focus:outline-none h-10"
+        >
+          <img src={addButtonIcon} alt="Add Activity" className="h-8 w-8" />
+        </button>
       </div>
 
       {/* Render filter tags */}
@@ -535,7 +547,9 @@ function Activities({ session }) {
           {showForm && (
             <div className="fixed top-0 left-0 w-full h-full bg-gray-500 bg-opacity-75 flex justify-center items-center">
               <div className="bg-white p-8 rounded shadow-md w-96">
-                <h2 className="text-xl font-bold mb-4">Add New Activity</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  {editingActivity ? `Edit ${editingActivity.activity_type} Activity` : 'Add New Activity'}
+                </h2>
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label htmlFor="plate_number" className="block text-gray-700 text-sm font-bold mb-2">
