@@ -9,7 +9,7 @@ function MyProfile() {
   const [address, setAddress] = useState('');
   const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
   const [loading, setLoading] = useState(true);
-    const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // Added state for edit mode
 
   useEffect(() => {
     fetchProfileData();
@@ -51,6 +51,41 @@ function MyProfile() {
     }
   };
 
+  const updateProfile = async () => {
+    try {
+      setLoading(true);
+      const user = supabase.auth.currentUser; // Get current user
+
+      if (!user) {
+        console.error('User is not authenticated.');
+        alert('User is not authenticated. Please log in.');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: name,
+          email: email,
+          phone: phone,
+          address: address,
+          license_expiry_date: licenseExpiryDate,
+        })
+        .eq('id', user.id) // Use user.id
+        .single();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        alert('Failed to update profile.');
+      } else {
+        alert('Profile updated successfully!');
+        setIsEditing(false); // Exit edit mode after saving
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-content">
@@ -84,7 +119,7 @@ function MyProfile() {
               </div>
               <div className="form-group">
                 <label htmlFor="email">Email:</label>
-                 {isEditing ? (
+                {isEditing ? (
                   <input
                     type="text"
                     id="email"
@@ -97,7 +132,7 @@ function MyProfile() {
               </div>
               <div className="form-group">
                 <label htmlFor="phone">Phone:</label>
-                 {isEditing ? (
+                {isEditing ? (
                   <input
                     type="text"
                     id="phone"
@@ -110,7 +145,7 @@ function MyProfile() {
               </div>
               <div className="form-group">
                 <label htmlFor="address">Address:</label>
-                 {isEditing ? (
+                {isEditing ? (
                   <input
                     type="text"
                     id="address"
@@ -123,7 +158,7 @@ function MyProfile() {
               </div>
               <div className="form-group">
                 <label htmlFor="licenseExpiryDate">License Expiry Date:</label>
-                 {isEditing ? (
+                {isEditing ? (
                   <input
                     type="date"
                     id="licenseExpiryDate"
@@ -134,6 +169,17 @@ function MyProfile() {
                   <input type="date" id="licenseExpiryDate" value={licenseExpiryDate} readOnly />
                 )}
               </div>
+              {!isEditing ? (
+                <button type="button" className="edit-button" onClick={() => setIsEditing(true)}>
+                  Edit
+                </button>
+              ) : (
+                <div className="save-button-container">
+                  <button type="button" className="save-button" onClick={updateProfile}>
+                    Save
+                  </button>
+                </div>
+              )}
             </form>
           )}
         </div>
