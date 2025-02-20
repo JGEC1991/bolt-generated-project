@@ -23,7 +23,7 @@ import React, { useState, useEffect } from 'react';
       useEffect(() => {
         fetchActivities();
         fetchUsers();
-      }, []);
+      }, [filters]); // Add filters as a dependency
 
       const fetchActivities = async () => {
         try {
@@ -43,10 +43,10 @@ import React, { useState, useEffect } from 'react';
             query = query.eq('activity_user', filters.activity_user);
           }
           if (filters.created_at_from) {
-            query = query.gte('created_at', filters.created_at_from);
+            query = query.gte('created_at', filters.created_at_from + 'T00:00:00.000Z');
           }
           if (filters.created_at_to) {
-            query = query.lte('created_at', filters.created_at_to);
+            query = query.lte('created_at', filters.created_at_to + 'T23:59:59.999Z');
           }
 
           const { data, error } = await query;
@@ -142,7 +142,7 @@ import React, { useState, useEffect } from 'react';
           created_at_from: '',
           created_at_to: '',
         });
-        fetchActivities();
+        fetchActivities(); // Fetch activities after clearing filters
       };
 
       return (
@@ -316,8 +316,8 @@ import React, { useState, useEffect } from 'react';
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-200">
-                <thead>
-                  <tr className="bg-gray-100">
+                <thead className="bg-gray-100 text-black">
+                  <tr>
                     <th className="px-4 py-2 text-left">ID</th>
                     <th className="px-4 py-2 text-left">Created At</th>
                     <th className="px-4 py-2 text-left">Plate Number</th>
@@ -326,7 +326,7 @@ import React, { useState, useEffect } from 'react';
                     <th className="px-4 py-2 text-left">Activity User</th>
                   </tr>
                 </thead>
-                <tbody className="text-black dark:text-white">
+                <tbody className="text-gray-700">
                   {activities.map((activity) => (
                     <tr key={activity.id} className="hover:bg-gray-50">
                       <td className="border px-4 py-2">{activity.id}</td>
