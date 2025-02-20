@@ -6,11 +6,13 @@ import Activities from './Activities';
 import LoginPage from './LoginPage';
 import { supabase } from './supabaseClient';
 import './index.css'; // Import the CSS file
+import Settings from './Settings';
 
 // Import image assets
 const homeIcon = 'https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//my-vehicule-icon.png';
 const myProfileIcon = 'https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//my-profile-icon.png';
 const activitiesIcon = 'https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//Activities.gif';
+const settingsIcon = 'https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//my-seetings-icon.png';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -80,6 +82,12 @@ function App() {
                 Activities
               </Link>
             </li>
+            <li className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}>
+              <Link to="/settings" className="nav-link">
+                <img src={settingsIcon} alt="Settings" className="nav-icon" />
+                Settings
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="header-buttons">
@@ -98,6 +106,7 @@ function App() {
         <Route path="/my-profile" element={<MyProfile session={session} />} />
         <Route path="/vehicle" element={<Vehicle />} />
         <Route path="/activities" element={<Activities session={session} />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<LoginPage />} />
       </Routes>
     </div>
