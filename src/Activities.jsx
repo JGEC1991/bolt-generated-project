@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-function Activities() {
+function Activities({ session }) {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -34,20 +35,21 @@ function Activities() {
     comments: true,
     activityUser: true,
     files: true,
-    actions: true,
   });
+  const [columnOrder, setColumnOrder] = useState(['id', 'createdAt', 'plateNumber', 'activityType', 'comments', 'activityUser', 'files']);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const actionsColumnRef = useRef(null);
+  const [editingActivity, setEditingActivity] = useState(null);
 
   useEffect(() => {
-    fetchActivities();
-    fetchUsers();
-  }, [filters, currentPage, activitiesPerPage]);
-
-  useEffect(() => {
-    // Update selectedActivities when activities change (e.g., after filtering)
-    setSelectedActivities([]);
-    setSelectAll(false);
-  }, [activities]);
+    if (session) {
+      fetchActivities();
+      fetchUsers();
+    } else {
+      setActivities([]);
+      setLoading(false);
+    }
+  }, [session, filters, currentPage, activitiesPerPage]);
 
   const fetchActivities = async () => {
     try {
@@ -188,13 +190,32 @@ function Activities() {
       }
     } catch (error) {
       console.error('Error adding activity:', error);
-      alert('Failed to add activity.');
+      alert('Error adding activity.');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleForm = () => {
+  const toggleForm = (activity = null) => {
+    if (activity) {
+      setEditingActivity(activity);
+      setNewActivity({
+        plate_number: activity.plate_number || '',
+        activity_type: activity.activity_type || '',
+        comments: activity.comments || '',
+        activity_user: activity.activity_user || '',
+        activity_files: activity.activity_files || '',
+      });
+    } else {
+      setEditingActivity(null);
+      setNewActivity({
+        plate_number: '',
+        activity_type: '',
+        comments: '',
+        activity_user: '',
+        activity_files: '',
+      });
+    }
     setShowForm(!showForm);
   };
 
@@ -402,6 +423,46 @@ function Activities() {
     setShowColumnSettings(!showColumnSettings);
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+
+    if (startIndex === endIndex) {
+      return;
+    }
+
+    const newColumnOrder = Array.from(columnOrder);
+    const [removed] = newColumnOrder.splice(startIndex, 1);
+    newColumnOrder.splice(endIndex, 0, removed);
+
+    setColumnOrder(newColumnOrder);
+  };
+
+  const getColumnHeader = (column) => {
+    switch (column) {
+      case 'id':
+        return 'ID';
+      case 'createdAt':
+        return 'Created At';
+      case 'plateNumber':
+        return 'Plate Number';
+      case 'activityType':
+        return 'Activity Type';
+      case 'comments':
+        return 'Comments';
+      case 'activityUser':
+        return 'Activity User';
+      case 'files':
+        return 'Files';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="container mx-auto mt-8">
       <div className="flex items-center justify-start mb-4">
@@ -581,87 +642,123 @@ function Activities() {
           {loading ? (
             <p>Loading activities...</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200">
-                <thead className="bg-gray-100 text-black">
-                  <tr>
-                    <th className="px-4 py-2 text-left">
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAll}
-                        className="focus:outline-none focus:shadow-outline"
-                      />
-                    </th>
-                    {columnVisibility.id && <th className="px-4 py-2 text-left">ID</th>}
-                    {columnVisibility.createdAt && <th className="px-4 py-2 text-left">Created At</th>}
-                    {columnVisibility.plateNumber && <th className="px-4 py-2 text-left">Plate Number</th>}
-                    {columnVisibility.activityType && <th className="px-4 py-2 text-left">Activity Type</th>}
-                    {columnVisibility.comments && <th className="px-4 py-2 text-left">Comments</th>}
-                    {columnVisibility.activityUser && <th className="px-4 py-2 text-left">Activity User</th>}
-                    {columnVisibility.files && <th className="px-4 py-2 text-left">Files</th>}
-                    <th className="px-4 py-2 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-700">
-                  {activities.map((activity) => (
-                    <tr key={activity.id} className="hover:bg-gray-50">
-                      <td className="border px-4 py-2">
-                        <input
-                          type="checkbox"
-                          value={activity.id}
-                          checked={selectedActivities.includes(activity.id)}
-                          onChange={() => handleActivitySelection(activity.id)}
-                          className="focus:outline-none focus:shadow-outline"
-                        />
-                      </td>
-                      {columnVisibility.id && <td className="border px-4 py-2">{activity.id}</td>}
-                      {columnVisibility.createdAt && (
-                        <td className="border px-4 py-2">{formatDate(activity.created_at)}</td>
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200">
+                  <thead className="bg-gray-100 text-black">
+                    <Droppable droppableId="column-headers" type="COLUMN" direction="horizontal">
+                      {(provided) => (
+                        <tr {...provided.droppableProps} ref={provided.innerRef}>
+                          <th className="px-4 py-2 text-left">
+                            <input
+                              type="checkbox"
+                              checked={selectAll}
+                              onChange={handleSelectAll}
+                              className="focus:outline-none focus:shadow-outline"
+                            />
+                          </th>
+                          {columnOrder.map((column, index) => (
+                            <Draggable key={column} draggableId={column} index={index} isDragDisabled={column === 'actions'}>
+                              {(provided) => (
+                                <th
+                                  className="px-4 py-2 text-left"
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  style={provided.draggableProps.style}
+                                >
+                                  <div {...(column !== 'actions' ? provided.dragHandleProps : {})}>
+                                    {getColumnHeader(column)}
+                                  </div>
+                                </th>
+                              )}
+                            </Draggable>
+                          ))}
+                          <th className="px-4 py-2 text-left" ref={actionsColumnRef}>Actions</th>
+                        </tr>
                       )}
-                      {columnVisibility.plateNumber && <td className="border px-4 py-2">{activity.plate_number}</td>}
-                      {columnVisibility.activityType && <td className="border px-4 py-2">{activity.activity_type}</td>}
-                      {columnVisibility.comments && <td className="border px-4 py-2">{activity.comments}</td>}
-                      {columnVisibility.activityUser && <td className="border px-4 py-2">{activity.activity_user}</td>}
-                      {columnVisibility.files && (
+                    </Droppable>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    {activities.map((activity) => (
+                      <tr key={activity.id} className="hover:bg-gray-50">
                         <td className="border px-4 py-2">
-                          {activity.activity_files && (
-                            <a
-                              href={activity.activity_files}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-700"
-                            >
-                              View File
-                            </a>
-                          )}
+                          <input
+                            type="checkbox"
+                            value={activity.id}
+                            checked={selectedActivities.includes(activity.id)}
+                            onChange={() => handleActivitySelection(activity.id)}
+                            className="focus:outline-none focus:shadow-outline"
+                          />
                         </td>
-                      )}
-                      <td className="border px-4 py-2">
-                        <button
-                          onClick={() => toggleForm(activity)}
-                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteActivity(activity.id)}
-                          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
-                        >
-                          Delete
-                        </button>
-                        <button
-                          onClick={() => handleArchiveActivity(activity.id)}
-                          className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
-                        >
-                          Archive
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        {columnOrder.map((column) => {
+                          if (!columnVisibility[column]) {
+                            return null;
+                          }
+                          let content;
+                          switch (column) {
+                            case 'id':
+                              content = activity.id;
+                              break;
+                            case 'createdAt':
+                              content = formatDate(activity.created_at);
+                              break;
+                            case 'plateNumber':
+                              content = activity.plate_number;
+                              break;
+                            case 'activityType':
+                              content = activity.activity_type;
+                              break;
+                            case 'comments':
+                              content = activity.comments;
+                              break;
+                            case 'activityUser':
+                              content = activity.activity_user;
+                              break;
+                            case 'files':
+                              content = (
+                                activity.activity_files && (
+                                  <a
+                                    href={activity.activity_files}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:text-blue-700"
+                                  >
+                                    View File
+                                  </a>
+                                )
+                              );
+                              break;
+                            default:
+                              content = null;
+                          }
+                          return <td key={`${activity.id}-${column}`} className="border px-4 py-2">{content}</td>;
+                        })}
+                        <td className="border px-4 py-2">
+                          <button
+                            onClick={() => toggleForm(activity)}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteActivity(activity.id)}
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs mr-1"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => handleArchiveActivity(activity.id)}
+                            className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
+                          >
+                            Archive
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </DragDropContext>
           )}
           <div className="flex justify-between items-center mt-4">
             {selectedActivities.length > 0 && (
