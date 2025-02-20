@@ -87,7 +87,7 @@ function MyProfile() {
       }
 
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${session.user.id}.${fileExt}`;
+      const fileName = `${session.user.id}.${fileExt}`; // File name includes user ID
       const filePath = `${fileName}`; // Path within the bucket
 
       const { data, error } = await supabase.storage
