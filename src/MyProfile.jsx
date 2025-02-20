@@ -11,6 +11,7 @@ function MyProfile() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [session, setSession] = useState(null); // Add session state
+  const [initialProfileData, setInitialProfileData] = useState({}); // Track initial data
 
   useEffect(() => {
     // Fetch session on mount
@@ -48,6 +49,7 @@ function MyProfile() {
         setPhone(data.phone || '');
         setAddress(data.address || '');
         setLicenseExpiryDate(data.license_expiry_date || '');
+        setInitialProfileData(data); // Store initial data
       }
     } finally {
       setLoading(false);
@@ -77,16 +79,34 @@ function MyProfile() {
         return;
       }
 
+      const updates = {};
+
+      if (name !== initialProfileData.full_name) {
+        updates.full_name = name;
+      }
+      if (email !== initialProfileData.email) {
+        updates.email = email;
+      }
+      if (phone !== initialProfileData.phone) {
+        updates.phone = phone;
+      }
+      if (address !== initialProfileData.address) {
+        updates.address = address;
+      }
+      if (licenseExpiryDate !== initialProfileData.license_expiry_date) {
+        updates.license_expiry_date = licenseExpiryDate || null;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        alert('No changes to update.');
+        setIsEditing(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
-        .update({
-          full_name: name,
-          email: email,
-          phone: phone,
-          address: address,
-          license_expiry_date: licenseExpiryDate,
-        })
-        .eq('id', session.user.id) // Use session.user.id
+        .update(updates)
+        .eq('id', session.user.id)
         .single();
 
       if (error) {
