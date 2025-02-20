@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
     import { supabase } from './supabaseClient';
 
     function MyProfile() {
-      const [profileImage, setProfileImage] = useState(null);
-      const [name, setName] = useState('');
+      const [profileImage, setProfileImage] = useState('');
+      const [fullName, setFullName] = useState('');
       const [email, setEmail] = useState('');
       const [phone, setPhone] = useState('');
       const [address, setAddress] = useState('');
@@ -14,6 +14,8 @@ import React, { useState, useEffect } from 'react';
       const [initialProfileData, setInitialProfileData] = useState({});
       const [selectedFile, setSelectedFile] = useState(null);
       const [profileImageUrl, setProfileImageUrl] = useState('');
+      const [plateNumber, setPlateNumber] = useState('');
+      const [legalDocuments, setLegalDocuments] = useState(false);
 
       useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -35,8 +37,8 @@ import React, { useState, useEffect } from 'react';
         try {
           setLoading(true);
           const { data, error } = await supabase
-            .from('profiles')
-            .select('full_name, email, phone, address, license_expiry_date, profile_image')
+            .from('users')
+            .select('full_name, email, phone, address, license_expiry_date, profile_image, plate_number, legal_documents')
             .eq('id', session?.user?.id)
             .single();
 
@@ -44,13 +46,15 @@ import React, { useState, useEffect } from 'react';
             console.error('Error fetching profile data:', error);
             alert('Failed to load profile data.');
           } else if (data) {
-            setName(data.full_name || '');
+            setFullName(data.full_name || '');
             setEmail(data.email || '');
             setPhone(data.phone || '');
             setAddress(data.address || '');
             setLicenseExpiryDate(data.license_expiry_date || '');
-            setInitialProfileData(data);
             setProfileImageUrl(data.profile_image || '');
+            setPlateNumber(data.plate_number || '');
+            setLegalDocuments(data.legal_documents || false);
+            setInitialProfileData(data);
           }
         } finally {
           setLoading(false);
@@ -127,8 +131,8 @@ import React, { useState, useEffect } from 'react';
 
           const updatesToApply = { ...updates };
 
-          if (name !== initialProfileData.full_name) {
-            updatesToApply.full_name = name;
+          if (fullName !== initialProfileData.full_name) {
+            updatesToApply.full_name = fullName;
           }
           if (email !== initialProfileData.email) {
             updatesToApply.email = email;
@@ -142,6 +146,15 @@ import React, { useState, useEffect } from 'react';
           if (licenseExpiryDate !== initialProfileData.license_expiry_date) {
             updatesToApply.license_expiry_date = licenseExpiryDate || null;
           }
+          // if (plateNumber !== initialProfileData.plate_number) {
+          //   updatesToApply.plate_number = plateNumber;
+          // }
+          // if (legalDocuments !== initialProfileData.legal_documents) {
+          //   updatesToApply.legal_documents = legalDocuments;
+          // }
+          if (profileImage !== initialProfileData.profile_image) {
+            updatesToApply.profile_image = profileImage;
+          }
 
           if (Object.keys(updatesToApply).length === 0) {
             alert('No changes to update.');
@@ -150,7 +163,7 @@ import React, { useState, useEffect } from 'react';
           }
 
           const { data, error } = await supabase
-            .from('profiles')
+            .from('users')
             .update(updatesToApply)
             .eq('id', session.user.id)
             .single();
@@ -170,8 +183,8 @@ import React, { useState, useEffect } from 'react';
 
       const handleSaveProfile = async () => {
         const updates = {};
-        if (name !== initialProfileData.full_name) {
-          updates.full_name = name;
+        if (fullName !== initialProfileData.full_name) {
+          updates.full_name = fullName;
         }
         if (email !== initialProfileData.email) {
           updates.email = email;
@@ -184,6 +197,15 @@ import React, { useState, useEffect } from 'react';
         }
         if (licenseExpiryDate !== initialProfileData.license_expiry_date) {
           updates.license_expiry_date = licenseExpiryDate || null;
+        }
+        // if (plateNumber !== initialProfileData.plate_number) {
+        //   updates.plate_number = plateNumber;
+        // }
+        // if (legalDocuments !== initialProfileData.legal_documents) {
+        //   updates.legal_documents = legalDocuments;
+        // }
+        if (profileImage !== initialProfileData.profile_image) {
+          updates.profile_image = profileImage;
         }
 
         await updateProfile(updates);
@@ -226,16 +248,16 @@ import React, { useState, useEffect } from 'react';
               ) : session ? (
                 <form className="profile-form">
                   <div className="form-group">
-                    <label htmlFor="name">Name:</label>
+                    <label htmlFor="fullName">Full Name:</label>
                     {isEditing ? (
                       <input
                         type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        id="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                       />
                     ) : (
-                      <input type="text" id="name" value={name} readOnly />
+                      <input type="text" id="fullName" value={fullName} readOnly />
                     )}
                   </div>
                   <div className="form-group">

@@ -11,6 +11,9 @@ function Auth({ showSignUp = true }) {
   const [idNumber, setIdNumber] = useState('');
   const [licenseExpirationDate, setLicenseExpirationDate] = useState('');
   const [legalDocuments, setLegalDocuments] = useState(false);
+  const [plateNumber, setPlateNumber] = useState('');
+  const [address, setAddress] = useState('');
+  const [profileImage, setProfileImage] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
@@ -28,6 +31,9 @@ function Auth({ showSignUp = true }) {
             id_number: idNumber,
             license_expiration_date: licenseExpirationDate,
             legal_documents: legalDocuments,
+            plate_number: plateNumber,
+            address: address,
+            profile_image: profileImage,
           },
         },
       });
@@ -103,6 +109,115 @@ function Auth({ showSignUp = true }) {
               disabled={loading}
             >
               Login
+            </button>
+          </div>
+        </form>
+      )}
+      {showSignUp && (
+        <form onSubmit={handleSignUp} className="login-form">
+          <div>
+            <input
+              className="inputField"
+              type="email"
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="password"
+              placeholder="Your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="ID Number"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="date"
+              placeholder="License Expiration Date"
+              value={licenseExpirationDate}
+              onChange={(e) => setLicenseExpirationDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="Plate Number"
+              value={plateNumber}
+              onChange={(e) => setPlateNumber(e.target.value)}
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+          </div>
+          <div>
+            <input
+              className="inputField"
+              type="text"
+              placeholder="Profile Image URL"
+              value={profileImage}
+              onChange={(e) => setProfileImage(e.target.value)}
+            />
+          </div>
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                checked={legalDocuments}
+                onChange={(e) => setLegalDocuments(e.target.checked)}
+              />
+              I agree to the legal documents
+            </label>
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="login-button"
+              disabled={loading}
+            >
+              Sign Up
             </button>
           </div>
         </form>
