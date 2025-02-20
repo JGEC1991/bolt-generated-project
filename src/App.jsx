@@ -6,10 +6,12 @@ import React, { useState, useEffect } from 'react';
     import LoginPage from './LoginPage';
     import { supabase } from './supabaseClient';
     import './index.css'; // Import the CSS file
+
     function App() {
       const [session, setSession] = useState(null);
       const navigate = useNavigate();
-      const [theme, setTheme] = useState('light'); // Default theme is light
+      const [theme, setTheme] = useState('light');
+      const [isDarkMode, setIsDarkMode] = useState(false);
 
       useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,24 +28,33 @@ import React, { useState, useEffect } from 'react';
         navigate('/login');
       };
 
-      // Function to toggle the theme
       const toggleTheme = () => {
-        setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+        setIsDarkMode((prevMode) => !prevMode);
       };
 
-      // Add or remove the 'dark' class from the body based on the theme
       useEffect(() => {
-        if (theme === 'dark') {
+        if (isDarkMode) {
           document.body.classList.add('dark');
         } else {
           document.body.classList.remove('dark');
         }
-      }, [theme]);
+      }, [isDarkMode]);
 
       return (
-        <div className={`container ${theme === 'dark' ? 'dark' : ''}`}>
+        <div className={`container ${isDarkMode ? 'dark' : ''}`}>
+          <div className="header-top">
+            <div className="dark-mode-toggle-container">
+              <span className="dark-mode-label">
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              </span>
+              <label className="switch">
+                <input type="checkbox" checked={isDarkMode} onChange={toggleTheme} />
+                <span className="slider round"></span>
+              </label>
+            </div>
+          </div>
           <header className="header">
-            <nav className="nav">
+            <nav className={`nav ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
               <ul className="nav-list">
                 <li className="nav-item">
                   <Link to="/my-profile">My Profile</Link>
@@ -56,21 +67,17 @@ import React, { useState, useEffect } from 'react';
                 </li>
               </ul>
             </nav>
-            {session ? (
-              <div>
+            <div className="header-buttons">
+              {session ? (
                 <button className="logout-button" onClick={handleSignOut}>
                   Logout
                 </button>
-              </div>
-            ) : (
-              <Link to="/login" className="login-button">
-                Login
-              </Link>
-            )}
-            {/* Theme toggle button */}
-            <button onClick={toggleTheme}>
-              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </button>
+              ) : (
+                <Link to="/login" className="login-button">
+                  Login
+                </Link>
+              )}
+            </div>
           </header>
           <Routes>
             <Route path="/my-profile" element={<MyProfile session={session} />} />
