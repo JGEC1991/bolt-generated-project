@@ -9,11 +9,26 @@ function MyProfile() {
   const [address, setAddress] = useState('');
   const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false); // Added state for edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [session, setSession] = useState(null); // Add session state
 
   useEffect(() => {
-    fetchProfileData();
+    // Fetch session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
   }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchProfileData();
+    }
+  }, [session]);
 
   const fetchProfileData = async () => {
     try {
@@ -21,6 +36,7 @@ function MyProfile() {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, email, phone, address, license_expiry_date')
+        .eq('id', session?.user?.id) // Use session?.user?.id
         .single();
 
       if (error) {
@@ -54,9 +70,8 @@ function MyProfile() {
   const updateProfile = async () => {
     try {
       setLoading(true);
-      const user = supabase.auth.currentUser; // Get current user
 
-      if (!user) {
+      if (!session?.user) {
         console.error('User is not authenticated.');
         alert('User is not authenticated. Please log in.');
         return;
@@ -71,7 +86,7 @@ function MyProfile() {
           address: address,
           license_expiry_date: licenseExpiryDate,
         })
-        .eq('id', user.id) // Use user.id
+        .eq('id', session.user.id) // Use session.user.id
         .single();
 
       if (error) {
@@ -79,7 +94,7 @@ function MyProfile() {
         alert('Failed to update profile.');
       } else {
         alert('Profile updated successfully!');
-        setIsEditing(false); // Exit edit mode after saving
+        setIsEditing(false);
       }
     } finally {
       setLoading(false);
@@ -102,7 +117,7 @@ function MyProfile() {
           </div>
           {loading ? (
             <p>Loading profile data...</p>
-          ) : (
+          ) : session ? ( // Conditionally render the form
             <form className="profile-form">
               <div className="form-group">
                 <label htmlFor="name">Name:</label>
@@ -181,6 +196,8 @@ function MyProfile() {
                 </div>
               )}
             </form>
+          ) : (
+            <p>Loading session...</p>
           )}
         </div>
       </div>
