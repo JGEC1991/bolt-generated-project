@@ -201,7 +201,12 @@ function MyProfile() {
                     onChange={(e) => setLicenseExpiryDate(e.target.value)}
                   />
                 ) : (
-                  <input type="date" id="licenseExpiryDate" value={licenseExpiryDate} readOnly />
+                  <input
+                    type="date"
+                    id="licenseExpiryDate"
+                    value={licenseExpiryDate}
+                    disabled // Use disabled instead of readOnly
+                  />
                 )}
               </div>
               {!isEditing ? (

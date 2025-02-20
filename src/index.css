@@ -205,11 +205,12 @@ body {
 }
 
 .save-button-container {
-  position: absolute;
-  bottom: 20px;
+  position: relative; /* Changed to relative */
+  bottom: 0; /* Removed bottom positioning */
   left: 0;
   width: 100%;
   text-align: center;
+  margin-top: 20px; /* Added margin-top */
 }
 
 .save-button {
