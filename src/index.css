@@ -63,10 +63,40 @@ body {
   background-color: #0056b3;
 }
 
+.login-page-button {
+  display: inline-block;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 0.8em;
+}
+
+.login-page-button:hover {
+  background-color: #0056b3;
+}
+
 .profile-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start; /* Align items to the start (left) */
+  padding: 20px;
+}
+
+.profile-content {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+}
+
+.profile-left-panel {
+  width: 40%;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  position: relative; /* Add relative positioning */
 }
 
 .profile-picture-container {
@@ -82,6 +112,7 @@ body {
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  margin: 0 auto;
 }
 
 .profile-picture {
@@ -97,4 +128,100 @@ body {
 
 .profile-image-input {
   margin-top: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.login-box {
+  width: 300px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.login-form > div {
+  margin-bottom: 15px;
+}
+
+.logout-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
+}
+
+.edit-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #0056b3;
+}
+
+.save-button-container {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.save-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background-color: #218838;
 }
