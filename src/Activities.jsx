@@ -30,7 +30,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
       const [loading, setLoading] = useState(true);
       const [selectedActivity, setSelectedActivity] = useState(null);
       const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-      const [isListView, setIsListView] = false; // State to track view mode
+      const [isListView, setIsListView] = useState(false); // State to track view mode
       const [isFilterOpen, setIsFilterOpen] = useState(false); // State to track filter visibility
       const [filters, setFilters] = useState({}); // State to store filter values
       const [userEmails, setUserEmails] = useState([]); // State to store user emails
@@ -343,13 +343,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
           {/* Filter Tags */}
           {Object.keys(filters).length > 0 && (
             <div className="flex flex-wrap mb-4">
-              {Object.keys(filters).map((key) => (
-                filters[key] && (
+              {Object.entries(filters).map(([key, value]) => (
+                value && (
                   <div
                     key={key}
                     className="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300"
                   >
-                    {key}: {filters[key]}
+                    {key}: {value}
                     <button
                       type="button"
                       className="ml-1.5 -mr-2.5 text-blue-500 hover:text-blue-700"

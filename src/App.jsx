@@ -14,6 +14,7 @@ import React, { useState, useEffect, useRef } from 'react';
     import Vehicle from './Vehicle';
     import VehicleAdd from './VehicleAdd';
     import ActivityAdd from './ActivityAdd';
+    import VehicleRecord from './VehicleRecord';
     import './App.css';
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -216,6 +217,7 @@ import React, { useState, useEffect, useRef } from 'react';
               <Route path="/activities" element={<Activities />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/vehicle" element={<Vehicle />} />
+              <Route path="/vehicle/:id" element={<VehicleRecord />} />
             </Routes>
 
             {/* Vehicle Add Modal */}

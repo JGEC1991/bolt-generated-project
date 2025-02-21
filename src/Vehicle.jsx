@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
     import { supabase } from './supabaseClient';
     import Filter from './Filter'; // Import the Filter component
+    import { Link, useNavigate } from 'react-router-dom';
 
     function Vehicle() {
       const [loading, setLoading] = useState(true);
@@ -9,6 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
       const [filters, setFilters] = useState({});
       const [isListView, setIsListView] = useState(false); // State to track view mode
       const filterRef = useRef(null);
+      const navigate = useNavigate();
 
       const filterOptions = [
         { label: 'Make', value: 'make' },
@@ -22,7 +24,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
         try {
           setLoading(true);
           let query = supabase
-            .from('Vehicules')
+            .from('Vehicles')
             .select('*');
 
           // Apply filters to the query
@@ -56,7 +58,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
         try {
           setLoading(true);
           const { data, error } = await supabase
-            .from('Vehicules')
+            .from('Vehicles')
             .select('*');
 
           if (error) {
@@ -93,6 +95,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
       const toggleView = () => {
         setIsListView(!isListView);
+      };
+
+      const goToVehicle = (id) => {
+        navigate(`/vehicle/${id}`);
       };
 
       return (
@@ -134,7 +140,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
               {!isListView ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {vehicles.map((vehicle) => (
-                    <div key={vehicle.id} className="bg-white shadow-md rounded-md p-4">
+                    <div key={vehicle.id} className="bg-white shadow-md rounded-md p-4 cursor-pointer" onClick={() => goToVehicle(vehicle.id)}>
                       <h2 className="text-lg font-semibold">{vehicle.make} {vehicle.model}</h2>
                       <p><strong>Year:</strong> {vehicle.year}</p>
                       <p><strong>Color:</strong> {vehicle.color}</p>
@@ -160,7 +166,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
                     </thead>
                     <tbody>
                       {vehicles.map((vehicle) => (
-                        <tr key={vehicle.id} className="bg-white dark:bg-gray-800">
+                        <tr key={vehicle.id} className="bg-white dark:bg-gray-800 cursor-pointer" onClick={() => goToVehicle(vehicle.id)}>
                           <td className="px-4 py-2 text-center">{vehicle.make}</td>
                           <td className="px-4 py-2 text-center">{vehicle.model}</td>
                           <td className="px-4 py-2 text-center">{vehicle.year}</td>
