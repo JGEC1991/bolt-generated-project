@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, NavLink } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import Auth from './Auth';
@@ -6,6 +6,7 @@ import MyProfile from './MyProfile';
 import Activities from './Activities';
 import Settings from './Settings';
 import Vehicle from './Vehicle';
+import VehicleAdd from './VehicleAdd';
 import './App.css';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -20,6 +21,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 function App() {
   const [session, setSession] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,7 +32,22 @@ function App() {
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
+
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   return (
     <Router>
@@ -64,9 +82,22 @@ function App() {
                 </li>
               )}
             </div>
-            <li className="app-navbar-item app-navbar-item-right">
+            <div className="app-navbar-item app-navbar-item-right" ref={dropdownRef}>
+              {session && (
+                <div className="relative">
+                  <button onClick={toggleDropdown} className="app-navbar-link add-button">
+                    <img src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//universal-add-icon.png" alt="Add" className="app-navbar-icon" />
+                  </button>
+                  {isDropdownOpen && (
+                    <div className="dropdown">
+                      <Link to="/vehicle/add" className="dropdown-item">Add Vehicle</Link>
+                      <Link to="/activities/add" className="dropdown-item">Add Activity</Link>
+                    </div>
+                  )}
+                </div>
+              )}
               {session ? (
-                <button onClick={() => supabase.auth.signOut()} className="app-navbar-link">
+                <button onClick={() => supabase.auth.signOut()} className="app-navbar-link logout-button">
                   Logout
                 </button>
               ) : (
@@ -77,7 +108,7 @@ function App() {
               <NavLink to="/settings" className={({ isActive }) => `app-navbar-link ${isActive ? 'active' : ''}`}>
                 <img src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//settings-icon.png" alt="Settings" className="app-navbar-icon" />
               </NavLink>
-            </li>
+            </div>
           </ul>
         </nav>
 
@@ -88,6 +119,7 @@ function App() {
           <Route path="/activities" element={<Activities />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/vehicle" element={<Vehicle />} />
+          <Route path="/vehicle/add" element={<VehicleAdd />} />
         </Routes>
       </div>
     </Router>
