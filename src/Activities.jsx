@@ -1,113 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import React, { useState, useEffect, useCallback } from 'react';
+    import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+    import { supabase } from './supabaseClient';
+    import ActivityCard from './ActivityCard';
 
-const initialActivities = [
-  { id: '1', title: 'Activity 1', status: 'Open' },
-  { id: '2', title: 'Activity 2', status: 'In Progress' },
-  { id: '3', title: 'Activity 3', status: 'Completed' },
-  { id: '4', title: 'Activity 4', status: 'Open' },
-  { id: '5', title: 'Activity 5', status: 'In Progress' },
-];
+    const columnMap = {
+      Open: 'Open',
+      'In Progress': 'In Progress',
+      Completed: 'Completed',
+    };
 
-const columnMap = {
-  Open: 'Open',
-  'In Progress': 'In Progress',
-  Completed: 'Completed',
-};
+    function Activities() {
+      const [activities, setActivities] = useState([]);
+      const [currentPage, setCurrentPage] = useState(1);
+      const activitiesPerPage = 5;
+      const [loading, setLoading] = useState(true);
+      const [selectedActivity, setSelectedActivity] = useState(null);
+      const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
-function Activities() {
-  const [activities, setActivities] = useState(initialActivities);
-  const [currentPage, setCurrentPage] = useState(1);
-  const activitiesPerPage = 5;
+      const fetchActivities = useCallback(async () => {
+        try {
+          setLoading(true);
+          const { data, error } = await supabase
+            .from('activities')
+            .select('*');
 
-  useEffect(() => {
-    document.title = 'Activities';
-  }, []);
+          if (error) {
+            throw error;
+          }
 
-  const handleDragEnd = (result) => {
-    const { destination, source, draggableId } = result;
+          if (data) {
+            setActivities(data);
+          }
+        } catch (error) {
+          alert(error.message);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
 
-    if (!destination) {
-      return;
-    }
+      useEffect(() => {
+        document.title = 'Activities';
+        fetchActivities();
+      }, [fetchActivities]);
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
+      const handleDragEnd = async (result) => {
+        const { destination, source, draggableId } = result;
 
-    const newActivities = [...activities];
-    const activityIndex = activities.findIndex((activity) => activity.id === draggableId);
-    const activity = newActivities[activityIndex];
-    activity.status = destination.droppableId;
-    newActivities.splice(source.index, 1);
-    newActivities.splice(destination.index, 0, activity);
+        if (!destination) {
+          return;
+        }
 
-    setActivities(newActivities);
-  };
+        if (
+          destination.droppableId === source.droppableId &&
+          destination.index === source.index
+        ) {
+          return;
+        }
 
-  const indexOfLastActivity = currentPage * activitiesPerPage;
-  const indexOfFirstActivity = indexOfLastActivity - activitiesPerPage;
-  const currentActivities = activities.slice(indexOfFirstActivity, indexOfLastActivity);
+        const newActivities = [...activities];
+        const activityIndex = activities.findIndex((activity) => activity.id === parseInt(draggableId));
+        const activity = newActivities[activityIndex];
+        const newStatus = destination.droppableId;
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+        // Optimistic update
+        const previousStatus = activity.Status;
+        activity.Status = newStatus;
+        newActivities.splice(source.index, 1);
+        newActivities.splice(destination.index, 0, activity);
+        setActivities([...newActivities]); // Update state immediately
 
-  return (
-    <div className="container mx-auto mt-8">
-      <h1 className="text-2xl font-bold mb-4">Activities</h1>
+        try {
+          const { error } = await supabase
+            .from('activities')
+            .update({ Status: newStatus })
+            .eq('id', draggableId);
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex justify-between">
-          {Object.keys(columnMap).map((columnKey) => (
-            <div key={columnKey} className="w-1/3 p-2">
-              <h2 className="text-lg font-semibold mb-2">{columnMap[columnKey]}</h2>
-              <Droppable droppableId={columnKey}>
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="bg-gray-100 dark:bg-gray-700 rounded p-2 min-h-[100px]"
-                  >
-                    {currentActivities
-                      .filter((activity) => activity.status === columnKey)
-                      .map((activity, index) => (
-                        <Draggable key={activity.id} draggableId={activity.id} index={index}>
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="bg-white dark:bg-gray-800 shadow rounded p-2 mb-2"
-                            >
-                              {activity.title}
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    {provided.placeholder}
+          if (error) {
+            console.error("Error updating activity:", error);
+            alert('Error updating activity!');
+            // Revert optimistic update
+            activity.Status = previousStatus;
+            setActivities([...activities]);
+            throw error;
+          }
+        } catch (error) {
+          alert(error.message);
+        }
+      };
+
+      const indexOfLastActivity = currentPage * activitiesPerPage;
+      const indexOfFirstActivity = indexOfLastActivity - activitiesPerPage;
+      const currentActivities = activities.slice(indexOfFirstActivity, indexOfLastActivity);
+
+      const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+      const openCardModal = (activity) => {
+        setSelectedActivity(activity);
+        setIsCardModalOpen(true);
+      };
+
+      const closeCardModal = () => {
+        setSelectedActivity(null);
+        setIsCardModalOpen(false);
+      };
+
+      return (
+        <div className="container mx-auto mt-8">
+          <h1 className="text-2xl font-bold mb-4">Activities</h1>
+
+          {loading ? (
+            <p>Loading activities...</p>
+          ) : (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="flex justify-between">
+                {Object.keys(columnMap).map((columnKey) => (
+                  <div key={columnKey} className="w-1/3 p-2">
+                    <h2 className="text-lg font-semibold mb-2">{columnMap[columnKey]}</h2>
+                    <Droppable droppableId={columnKey}>
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="bg-gray-100 dark:bg-gray-700 rounded p-2 min-h-[100px]"
+                        >
+                          {currentActivities
+                            .filter((activity) => activity.Status === columnKey)
+                            .map((activity, index) => (
+                              <Draggable key={activity.id} draggableId={activity.id.toString()} index={index}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="bg-white dark:bg-gray-800 shadow rounded p-2 mb-2"
+                                  >
+                                    <button onClick={() => openCardModal(activity)} className="w-full text-left">
+                                      {activity.activity_type} - {activity.Status}
+                                    </button>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
                   </div>
-                )}
-              </Droppable>
+                ))}
+              </div>
+            </DragDropContext>
+          )}
+
+          <div className="flex justify-center mt-4">
+            {Array.from({ length: Math.ceil(activities.length / activitiesPerPage) }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => paginate(index + 1)}
+                className="mx-1 px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded"
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+
+          {/* Activity Card Modal */}
+          {isCardModalOpen && selectedActivity && (
+            <div className="modal">
+              <div className="modal-content">
+                <span className="close" onClick={closeCardModal}>
+                  &times;
+                </span>
+                <ActivityCard activity={selectedActivity} closeModal={closeCardModal} onActivityUpdate={fetchActivities} />
+              </div>
             </div>
-          ))}
+          )}
         </div>
-      </DragDropContext>
+      );
+    }
 
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: Math.ceil(activities.length / activitiesPerPage) }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => paginate(index + 1)}
-            className="mx-1 px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded"
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export default Activities;
+    export default Activities;
