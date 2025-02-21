@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
       const [vehicles, setVehicles] = useState([]);
       const [isFilterOpen, setIsFilterOpen] = useState(false);
       const [filters, setFilters] = useState({});
+      const [isListView, setIsListView] = useState(false); // State to track view mode
       const filterRef = useRef(null);
 
       const filterOptions = [
@@ -90,25 +91,32 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
         setFilters(newFilters);
       };
 
+      const toggleView = () => {
+        setIsListView(!isListView);
+      };
+
       return (
         <div className="container mx-auto mt-8">
           <h1 className="text-2xl font-bold mb-4">Vehicle Information</h1>
 
-          <div className="flex justify-end mb-4 relative" ref={filterRef}>
-            <button onClick={toggleFilter}>
-              <img
-                src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//filter-icon.png"
-                alt="Filter"
-                className="h-8 w-8"
-              />
-            </button>
-            <div className="absolute right-0 mt-2 z-10" style={{ width: '400px' }}>
-              <Filter
-                isOpen={isFilterOpen}
-                onClose={toggleFilter}
-                onFilter={handleFilter}
-                filterOptions={filterOptions}
-              />
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <button onClick={toggleView}>
+                <img
+                  src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//view-switch-icon.png"
+                  alt="Switch View"
+                  className="h-8 w-8"
+                />
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={toggleFilter}>
+                <img
+                  src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//filter-icon.png"
+                  alt="Filter"
+                  className="h-8 w-8"
+                />
+              </button>
             </div>
           </div>
 
@@ -122,18 +130,51 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
           {loading ? (
             <p>Loading vehicles...</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {vehicles.map((vehicle) => (
-                <div key={vehicle.id} className="bg-white shadow-md rounded-md p-4">
-                  <h2 className="text-lg font-semibold">{vehicle.make} {vehicle.model}</h2>
-                  <p><strong>Year:</strong> {vehicle.year}</p>
-                  <p><strong>Color:</strong> {vehicle.color}</p>
-                  <p><strong>Plate Number:</strong> {vehicle.plate_number}</p>
-                  <p><strong>Mileage:</strong> {vehicle.mileage}</p>
-                  <p><strong>Last Service:</strong> {formatDate(vehicle.last_service)}</p>
+            <>
+              {!isListView ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {vehicles.map((vehicle) => (
+                    <div key={vehicle.id} className="bg-white shadow-md rounded-md p-4">
+                      <h2 className="text-lg font-semibold">{vehicle.make} {vehicle.model}</h2>
+                      <p><strong>Year:</strong> {vehicle.year}</p>
+                      <p><strong>Color:</strong> {vehicle.color}</p>
+                      <p><strong>Plate Number:</strong> {vehicle.plate_number}</p>
+                      <p><strong>Mileage:</strong> {vehicle.mileage}</p>
+                      <p><strong>Last Service:</strong> {formatDate(vehicle.last_service)}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full">
+                    <thead>
+                      <tr className="bg-gray-200 dark:bg-gray-700">
+                        <th className="px-4 py-2 text-center">Make</th>
+                        <th className="px-4 py-2 text-center">Model</th>
+                        <th className="px-4 py-2 text-center">Year</th>
+                        <th className="px-4 py-2 text-center">Color</th>
+                        <th className="px-4 py-2 text-center">Plate Number</th>
+                        <th className="px-4 py-2 text-center">Mileage</th>
+                        <th className="px-4 py-2 text-center">Last Service</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vehicles.map((vehicle) => (
+                        <tr key={vehicle.id} className="bg-white dark:bg-gray-800">
+                          <td className="px-4 py-2 text-center">{vehicle.make}</td>
+                          <td className="px-4 py-2 text-center">{vehicle.model}</td>
+                          <td className="px-4 py-2 text-center">{vehicle.year}</td>
+                          <td className="px-4 py-2 text-center">{vehicle.color}</td>
+                          <td className="px-4 py-2 text-center">{vehicle.plate_number}</td>
+                          <td className="px-4 py-2 text-center">{vehicle.mileage}</td>
+                          <td className="px-4 py-2 text-center">{formatDate(vehicle.last_service)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </div>
       );

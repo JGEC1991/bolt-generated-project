@@ -30,7 +30,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
       const [loading, setLoading] = useState(true);
       const [selectedActivity, setSelectedActivity] = useState(null);
       const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-      const [isListView, setIsListView] = useState(false); // State to track view mode
+      const [isListView, setIsListView] = false; // State to track view mode
       const [isFilterOpen, setIsFilterOpen] = useState(false); // State to track filter visibility
       const [filters, setFilters] = useState({}); // State to store filter values
       const [userEmails, setUserEmails] = useState([]); // State to store user emails
@@ -296,7 +296,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
         <div className="container mx-auto mt-8">
           <h1 className="text-2xl font-bold mb-4">Activities</h1>
 
-          <div className="flex justify-between items-center mb-4 relative">
+          <div className="flex justify-between items-center mb-4 relative" ref={filterRef}>
             <div>
               <button onClick={toggleView}>
                 <img
@@ -321,14 +321,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
                   className="h-8 w-8"
                 />
               </button>
-              <div className="absolute right-0 mt-2 z-10" style={{ width: '400px' }}>
-                <ColumnToggle
-                  isOpen={isColumnToggleOpen}
-                  onClose={toggleColumnToggle}
-                  onColumnToggle={handleColumnToggle}
-                  columns={columnOptions}
-                />
-              </div>
+            </div>
+            <div className="absolute right-0 mt-2 z-10" style={{ width: '400px' }}>
+              <ColumnToggle
+                isOpen={isColumnToggleOpen}
+                onClose={toggleColumnToggle}
+                onColumnToggle={handleColumnToggle}
+                columns={columnOptions}
+              />
             </div>
             <div className="absolute right-0 mt-2 z-10" style={{ width: '400px' }}>
               <Filter
@@ -339,13 +339,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
               />
             </div>
           </div>
-
-          <ColumnToggle
-            isOpen={isColumnToggleOpen}
-            onClose={toggleColumnToggle}
-            onColumnToggle={handleColumnToggle}
-            columns={columnOptions}
-          />
 
           {/* Filter Tags */}
           {Object.keys(filters).length > 0 && (
@@ -436,16 +429,16 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
                     <tbody>
                       {currentActivities.map((activity, index) => (
                         <tr key={activity.id} className={`bg-white dark:bg-gray-800 ${index % 2 === 0 ? '' : 'bg-gray-100 dark:bg-gray-700'} hover:bg-gray-200 dark:hover:bg-gray-600`}>
-                          {columnVisibility.activity_type && <td style={{ padding: '0.75rem' }}>{activity.activity_type}</td>}
-                          {columnVisibility.comments && <td style={{ padding: '0.75rem' }}>{activity.comments}</td>}
-                          {columnVisibility.activity_user && <td style={{ padding: '0.75rem' }}>{activity.activity_user}</td>}
-                          {columnVisibility.plate_number && <td style={{ padding: '0.75rem' }}>{activity.plate_number}</td>}
-                          {columnVisibility.Status && <td style={{ padding: '0.75rem' }}>{activity.Status}</td>}
-                          {columnVisibility.activity_date && <td style={{ padding: '0.75rem' }}>{formatDate(activity.activity_date)}</td>}
-                          {columnVisibility.activity_files && <td style={{ padding: '0.75rem' }}>{activity.activity_files}</td>}
-                          {columnVisibility.created_at && <td style={{ padding: '0.75rem' }}>{formatDate(activity.created_at)}</td>}
-                          {columnVisibility.id && <td style={{ padding: '0.75rem' }}>{activity.id}</td>}
-                          <td style={{ padding: '0.75rem' }}>
+                          {columnVisibility.activity_type && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.activity_type}</td>}
+                          {columnVisibility.comments && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.comments}</td>}
+                          {columnVisibility.activity_user && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.activity_user}</td>}
+                          {columnVisibility.plate_number && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.plate_number}</td>}
+                          {columnVisibility.Status && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.Status}</td>}
+                          {columnVisibility.activity_date && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{formatDate(activity.activity_date)}</td>}
+                          {columnVisibility.activity_files && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.activity_files}</td>}
+                          {columnVisibility.created_at && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{formatDate(activity.created_at)}</td>}
+                          {columnVisibility.id && <td style={{ padding: '0.75rem', textAlign: 'center' }}>{activity.id}</td>}
+                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                             <button
                               className="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded focus:outline-none focus:shadow-outline mr-2"
                               style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }} // Reduced padding and font size
