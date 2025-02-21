@@ -1,121 +1,73 @@
 import React, { useState } from 'react';
-import { supabase } from './supabaseClient';
 
 function Settings() {
-  const [loading, setLoading] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
   const [language, setLanguage] = useState('en');
-  const [customFields, setCustomFields] = useState([]);
-  const [newFieldName, setNewFieldName] = useState('');
+  const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
-  const handlePasswordReset = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      if (error) {
-        console.error('Error resetting password:', error);
-        alert('Failed to reset password.');
-      } else {
-        alert('Password reset successfully!');
-      }
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      alert('Failed to reset password.');
-    } finally {
-      setLoading(false);
-    }
+  const handleLanguageChange = (event) => {
+    setLanguage(event.target.value);
   };
 
-  const handleLanguageChange = (e) => {
-    setLanguage(e.target.value);
-    alert(`Language changed to ${e.target.value}! (This is a mock implementation)`);
-  };
-
-  const handleAddField = () => {
-    if (newFieldName.trim() !== '') {
-      setCustomFields([...customFields, newFieldName.trim()]);
-      setNewFieldName('');
-    }
-  };
-
-  const handleRemoveField = (index) => {
-    const newFields = [...customFields];
-    newFields.splice(index, 1);
-    setCustomFields(newFields);
+  const handlePasswordReset = () => {
+    // Implement password reset logic here
+    alert('Password reset initiated');
   };
 
   return (
     <div className="container mx-auto mt-8">
-      <div className="bg-white p-8 rounded shadow-md">
-        <h1 className="text-2xl font-bold mb-4">Settings</h1>
+      <h1 className="text-2xl font-bold mb-4">Settings</h1>
 
-        {/* Password Reset */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Password Reset</h2>
-          <input
-            type="password"
-            placeholder="New Password"
-            className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline ml-2 text-xs"
-            onClick={handlePasswordReset}
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Reset Password'}
-          </button>
-        </div>
+      <div className="mb-4">
+        <label htmlFor="language" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+          Language:
+        </label>
+        <select
+          id="language"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline"
+          value={language}
+          onChange={handleLanguageChange}
+        >
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+        </select>
+      </div>
 
-        {/* Language Settings */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Language Settings</h2>
-          <select
-            className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            value={language}
-            onChange={handleLanguageChange}
-          >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-          </select>
-        </div>
+      <div className="mb-4">
+        <label htmlFor="currentPassword" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+          Current Password:
+        </label>
+        <input
+          type="password"
+          id="currentPassword"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
 
-        {/* Custom Fields Creation */}
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Custom Fields Creation</h2>
-          <div className="flex items-center mb-2">
-            <input
-              type="text"
-              placeholder="New Field Name"
-              className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              value={newFieldName}
-              onChange={(e) => setNewFieldName(e.target.value)}
-            />
-            <button
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline ml-2 text-xs"
-              onClick={handleAddField}
-            >
-              Add Field
-            </button>
-          </div>
-          <ul>
-            {customFields.map((field, index) => (
-              <li key={index} className="flex items-center justify-between py-2 border-b border-gray-200">
-                <span>{field}</span>
-                <button
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline text-xs"
-                  onClick={() => handleRemoveField(index)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="mb-6">
+        <label htmlFor="newPassword" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+          New Password:
+        </label>
+        <input
+          type="password"
+          id="newPassword"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          type="button"
+          onClick={handlePasswordReset}
+        >
+          Reset Password
+        </button>
       </div>
     </div>
   );
