@@ -27,37 +27,35 @@ import React, { useState } from 'react';
       }
 
       return (
-        <div className="fixed top-0 left-0 w-full h-full bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-4 rounded shadow-md w-96">
-            <h2 className="text-lg font-semibold mb-4">Toggle Columns</h2>
-            {columns.map((column) => (
-              <div key={column.value} className="mb-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    className="form-checkbox h-5 w-5 text-blue-600"
-                    name={column.value}
-                    checked={columnVisibility[column.value]}
-                    onChange={handleCheckboxChange}
-                  />
-                  <span className="ml-2 text-gray-700">{column.label}</span>
-                </label>
-              </div>
-            ))}
-            <div className="flex justify-end mt-4">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
-                onClick={handleApplyChanges}
-              >
-                Apply Changes
-              </button>
-              <button
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
-                onClick={onClose}
-              >
-                Close
-              </button>
+        <div className="absolute top-full right-0 bg-white p-4 rounded shadow-md w-96 z-10">
+          <h2 className="text-lg font-semibold mb-4">Toggle Columns</h2>
+          {columns.map((column) => (
+            <div key={column.value} className="mb-2">
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                  name={column.value}
+                  checked={columnVisibility[column.value]}
+                  onChange={handleCheckboxChange}
+                />
+                <span className="ml-2 text-gray-700">{column.label}</span>
+              </label>
             </div>
+          ))}
+          <div className="flex justify-end mt-4">
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
+              onClick={handleApplyChanges}
+            >
+              Apply Changes
+            </button>
+            <button
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2"
+              onClick={onClose}
+            >
+              Close
+            </button>
           </div>
         </div>
       );

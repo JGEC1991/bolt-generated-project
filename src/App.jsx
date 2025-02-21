@@ -140,7 +140,7 @@ import React, { useState, useEffect, useRef } from 'react';
                   )}
                 </div>
                 <div
-                  className="app-navbar-item app-navbar-item-right"
+                  className="app-navbar-item app-navbar-item-right flex items-center"
                   ref={dropdownRef}
                 >
                   {session && (
@@ -153,6 +153,7 @@ import React, { useState, useEffect, useRef } from 'react';
                           src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//universal-add-icon.png"
                           alt="Add"
                           className="app-navbar-icon"
+                          style={{ width: '24px', height: '24px' }}
                         />
                       </button>
                       {isDropdownOpen && (
@@ -176,9 +177,14 @@ import React, { useState, useEffect, useRef } from 'react';
                   {session ? (
                     <button
                       onClick={() => supabase.auth.signOut()}
-                      className="app-navbar-link logout-button"
+                      className="app-navbar-link"
                     >
-                      Logout
+                      <img
+                        src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//logout-icon.png"
+                        alt="Logout"
+                        className="app-navbar-icon"
+                        style={{ width: '24px', height: '24px' }}
+                      />
                     </button>
                   ) : (
                     <NavLink
@@ -196,6 +202,7 @@ import React, { useState, useEffect, useRef } from 'react';
                       src="https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/assets//settings-icon.png"
                       alt="Settings"
                       className="app-navbar-icon"
+                      style={{ width: '24px', height: '24px' }}
                     />
                   </NavLink>
                 </div>
