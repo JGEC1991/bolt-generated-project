@@ -50,17 +50,14 @@ import React, { useState, useEffect, useRef } from 'react';
         });
       };
 
-      async function uploadImage(bucketName, file, setImageUrlState, fileInputRef, imageUrlField) {
+      async function uploadImage(event, bucketName, imageUrlField) {
+        const file = event.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const filePath = `vehicles/${id}/${Math.random()}.${fileExt}`;
+
         setUploading(true);
+
         try {
-          if (!file) {
-            alert('Please select a file to upload.');
-            return;
-          }
-
-          const fileExt = file.name.split('.').pop();
-          const filePath = `vehicles/${id}/${Math.random()}.${fileExt}`;
-
           const { data, error } = await supabase.storage
             .from(bucketName)
             .upload(filePath, file, {
@@ -74,7 +71,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
           const fileUrl = `https://fbldpvpdmvtrfxdslfba.supabase.co/storage/v1/object/public/${bucketName}/${filePath}`;
 
-          const { data: updateData, error: updateError } = await supabase
+          const { error: updateError } = await supabase
             .from('Vehicles')
             .update({ [imageUrlField]: fileUrl })
             .eq('id', id);
@@ -83,39 +80,32 @@ import React, { useState, useEffect, useRef } from 'react';
             throw updateError;
           }
 
-          setImageUrlState(fileUrl);
-          alert('File uploaded and vehicle updated successfully!');
+          setVehicle({ ...vehicle, [imageUrlField]: fileUrl });
         } catch (error) {
           alert(error.message);
         } finally {
           setUploading(false);
-          fileInputRef.current.value = null;
         }
       }
 
       const handleFrontPhotoUpload = async (event) => {
-        const file = event.target.files[0];
-        await uploadImage('vehicle-front-photo', file, (url) => setVehicle({ ...vehicle, "front-photo": url }), fileInputFront, 'front-photo');
+        await uploadImage(event, 'vehicle-front-photo', 'front-photo');
       };
 
       const handleLeftPhotoUpload = async (event) => {
-        const file = event.target.files[0];
-        await uploadImage('vehicle-left-photo', file,  (url) => setVehicle({ ...vehicle, "left-photo": url }), fileInputLeft, 'left-photo');
+        await uploadImage(event, 'vehicle-left-photo', 'left-photo');
       };
 
       const handleRightPhotoUpload = async (event) => {
-        const file = event.target.files[0];
-        await uploadImage('vehicle-right-photo', file, (url) => setVehicle({ ...vehicle, "right-photo": url }), fileInputRight, 'right-photo');
+        await uploadImage(event, 'vehicle-right-photo', 'right-photo');
       };
 
       const handleBackPhotoUpload = async (event) => {
-        const file = event.target.files[0];
-        await uploadImage('vehicle-back-photo', file, (url) => setVehicle({ ...vehicle, "back-photo": url }), fileInputBack, 'back-photo');
+        await uploadImage(event, 'vehicle-back-photo', 'back-photo');
       };
 
       const handleDashboardPhotoUpload = async (event) => {
-        const file = event.target.files[0];
-        await uploadImage('vehicle-dashboard-photo', file, (url) => setVehicle({ ...vehicle, "dashboard-photo": url }), fileInputDashboard, 'dashboard-photo');
+        await uploadImage(event, 'vehicle-dashboard-photo', 'dashboard-photo');
       };
 
       if (loading) {
@@ -138,28 +128,143 @@ import React, { useState, useEffect, useRef } from 'react';
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="front-photo">Front Photo</label>
-              {vehicle && vehicle["front-photo"] && <img src={vehicle["front-photo"]} alt="Front" className="mb-2" style={{ maxWidth: '200px' }} />}
-              <input type="file" id="front-photo" ref={fileInputFront} onChange={handleFrontPhotoUpload} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+              <input
+                style={{ visibility: 'hidden', position: 'absolute' }}
+                type="file"
+                id="front-photo"
+                accept="image/*"
+                onChange={handleFrontPhotoUpload}
+                disabled={uploading}
+                ref={fileInputFront}
+              />
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                }}
+                onClick={() => fileInputFront.current.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading ...' : 'Upload'}
+              </button>
+              {vehicle["front-photo"] && <img src={vehicle["front-photo"]} alt="Front" className="mb-2" style={{ maxWidth: '200px' }} />}
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="left-photo">Left Photo</label>
-              {vehicle && vehicle["left-photo"] && <img src={vehicle["left-photo"]} alt="Left" className="mb-2" style={{ maxWidth: '200px' }} />}
-              <input type="file" id="left-photo" ref={fileInputLeft} onChange={handleLeftPhotoUpload} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+              <input
+                style={{ visibility: 'hidden', position: 'absolute' }}
+                type="file"
+                id="left-photo"
+                accept="image/*"
+                onChange={handleLeftPhotoUpload}
+                disabled={uploading}
+                ref={fileInputLeft}
+              />
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                }}
+                onClick={() => fileInputLeft.current.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading ...' : 'Upload'}
+              </button>
+              {vehicle["left-photo"] && <img src={vehicle["left-photo"]} alt="Left" className="mb-2" style={{ maxWidth: '200px' }} />}
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="right-photo">Right Photo</label>
-              {vehicle && vehicle["right-photo"] && <img src={vehicle["right-photo"]} alt="Right" className="mb-2" style={{ maxWidth: '200px' }} />}
-              <input type="file" id="right-photo" ref={fileInputRight} onChange={handleRightPhotoUpload} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+              <input
+                style={{ visibility: 'hidden', position: 'absolute' }}
+                type="file"
+                id="right-photo"
+                accept="image/*"
+                onChange={handleRightPhotoUpload}
+                disabled={uploading}
+                ref={fileInputRight}
+              />
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                }}
+                onClick={() => fileInputRight.current.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading ...' : 'Upload'}
+              </button>
+              {vehicle["right-photo"] && <img src={vehicle["right-photo"]} alt="Right" className="mb-2" style={{ maxWidth: '200px' }} />}
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="back-photo">Back Photo</label>
-              {vehicle && vehicle["back-photo"] && <img src={vehicle["back-photo"]} alt="Back" className="mb-2" style={{ maxWidth: '200px' }} />}
-              <input type="file" id="back-photo" ref={fileInputBack} onChange={handleBackPhotoUpload} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+              <input
+                style={{ visibility: 'hidden', position: 'absolute' }}
+                type="file"
+                id="back-photo"
+                accept="image/*"
+                onChange={handleBackPhotoUpload}
+                disabled={uploading}
+                ref={fileInputBack}
+              />
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                }}
+                onClick={() => fileInputBack.current.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading ...' : 'Upload'}
+              </button>
+              {vehicle["back-photo"] && <img src={vehicle["back-photo"]} alt="Back" className="mb-2" style={{ maxWidth: '200px' }} />}
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dashboard-photo">Dashboard Photo</label>
-              {vehicle && vehicle["dashboard-photo"] && <img src={vehicle["dashboard-photo"]} alt="Dashboard" className="mb-2" style={{ maxWidth: '200px' }} />}
-              <input type="file" id="dashboard-photo" ref={fileInputDashboard} onChange={handleDashboardPhotoUpload} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+              <input
+                style={{ visibility: 'hidden', position: 'absolute' }}
+                type="file"
+                id="dashboard-photo"
+                accept="image/*"
+                onChange={handleDashboardPhotoUpload}
+                disabled={uploading}
+                ref={fileInputDashboard}
+              />
+              <button
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                }}
+                onClick={() => fileInputDashboard.current.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading ...' : 'Upload'}
+              </button>
+              {vehicle["dashboard-photo"] && <img src={vehicle["dashboard-photo"]} alt="Dashboard" className="mb-2" style={{ maxWidth: '200px' }} />}
             </div>
           </div>
         </div>
